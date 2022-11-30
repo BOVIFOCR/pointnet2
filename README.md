@@ -1,16 +1,16 @@
 ### BERNARDO
 
 ```
-# install cuda-8.0
+# INSTALL CUDA-8.0
 https://developer.nvidia.com/cuda-80-ga2-download-archive
 
-# install cuDNN v6.0 (April 27, 2017), for CUDA 8.0
+# INSTALL cuDNN v6.0 (APRIL 27, 2017), FOR CUDA 8.0
 Download "https://developer.nvidia.com/compute/machine-learning/cudnn/secure/v6/prod/8.0_20170307/cudnn-8.0-linux-x64-v6.0-tgz"
 Extract "cudnn-8.0-linux-x64-v6.0-tgz"
 Copy all files in "cudnn-8.0-linux-x64-v6.0/cuda/include" to "/usr/local/cuda-8.0/include"
 Copy all files in "cudnn-8.0-linux-x64-v6.0/cuda/lib64"   to "/usr/local/cuda-8.0/lib64"
 
-# install gcc-5 and g++-5
+# INSTALL gcc-5 AND g++-5
 https://packages.ubuntu.com/bionic/amd64/gcc-5/download
 https://packages.ubuntu.com/bionic/amd64/g++-5/download
 Create a symbolic link of "/usr/bin/gcc-5" to "/usr/local/cuda-8.0/bin/gcc"
@@ -18,23 +18,27 @@ Create a symbolic link of "/usr/bin/g++-5" to "/usr/local/cuda-8.0/bin/g++"
 
 --------------------
 
-ENV_NAME=bjgbiesseck_pointnet2_tf_original_biesseck
+# CREATE CONDA ENV
+ENV_NAME=pointnet2_tensorflow
 conda create --name $ENV_NAME python=2.7
 conda activate $ENV_NAME
-conda env config vars set CUDA_HOME="/usr/local/cuda-8.0"
-conda env config vars set LD_LIBRARY_PATH="$CUDA_HOME/lib64"
-conda env config vars set PATH="$CUDA_HOME:$CUDA_HOME/bin:$LD_LIBRARY_PATH:$PATH"
-conda deactivate
-conda activate $ENV_NAME
+conda env config vars set CUDA_HOME="/usr/local/cuda-8.0"; conda deactivate; conda activate $ENV_NAME
+conda env config vars set LD_LIBRARY_PATH="$CUDA_HOME/lib64"; conda deactivate; conda activate $ENV_NAME
+conda env config vars set PATH="$CUDA_HOME:$CUDA_HOME/bin:$LD_LIBRARY_PATH:$PATH"; conda deactivate; conda activate $ENV_NAME
 
+# INSTALL DEPENDENCIES
 pip install matplotlib h5py opencv-python==4.2.0.32 tensorflow==1.4.0 tensorflow-gpu==1.4.0 pathlib plyfile scipy provider
 conda install cudatoolkit
 conda install cudnn
 
-git clone https://github.com/biesseck/pointnet2.git
-cd pointnet2
-cd tf_ops/grouping; ./tf_grouping_compile.sh; cd ../sampling; ./tf_sampling_compile.sh; cd ../3d_interpolation; ./tf_interpolate_compile.sh; cd ../..
-python train.py
+# COMPILE C++/CUDA BASIC OPERATIONS
+cd pointnet2_tensorflow/tf_ops/grouping; ./tf_grouping_compile.sh; cd ../sampling; ./tf_sampling_compile.sh; cd ../3d_interpolation; ./tf_interpolate_compile.sh; cd ../..
+
+# RUN POINTNET++ TRAIN SCRIPT FOR 3D FACE RECOGNITION
+cd pointnet2_tensorflow/face_recognition_3d
+python train_face_recognition_class_angmargin.py
+# or  python train_face_recognition_class.py
+# or  python train_face_recognition_verif_pairs.py
 ```
 
 
