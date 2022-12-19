@@ -102,7 +102,7 @@ def get_loss_arcface(embd, labels, end_points, weights_fc, num_classes, m=0.5, s
     tf.summary.scalar('classify loss', classify_loss)
     tf.add_to_collection('losses', classify_loss)
     
-    return logits, loss, classify_loss
+    return embds, logits, loss, classify_loss
 
 
 # Bernardo

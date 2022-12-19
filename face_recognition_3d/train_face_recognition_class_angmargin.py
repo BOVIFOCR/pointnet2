@@ -14,6 +14,7 @@ import socket
 import importlib
 import os
 import sys
+THIS_FILE_NAME = os.path.basename(__file__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = BASE_DIR
 sys.path.append(BASE_DIR)
@@ -64,7 +65,10 @@ parser.add_argument('--normal', type=bool, default=False, help='Whether to use n
 # parser.add_argument('--dataset', type=str, default='synthetic_gpmm', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_lfw', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2', help='Name of dataset to train model')   # Bernardo
-parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_reduced', help='Name of dataset to train model')   # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_reduced', help='Name of dataset to train model')   # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_1000subj', help='Name of dataset to train model')   # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_2000subj', help='Name of dataset to train model')   # Bernardo
+parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_5000subj', help='Name of dataset to train model')   # Bernardo
 
 
 FLAGS = parser.parse_args()
@@ -88,7 +92,7 @@ LOG_DIR = os.path.dirname(os.path.abspath(__file__)) + '/logs_training/classific
 
 if not os.path.exists(LOG_DIR): os.makedirs(LOG_DIR)
 os.system('cp %s %s' % (MODEL_FILE, LOG_DIR)) # bkp of model def
-os.system('cp train_face_recognition_class.py %s' % (LOG_DIR)) # bkp of train procedure
+os.system('cp %s %s' % (THIS_FILE_NAME, LOG_DIR)) # bkp of train procedure
 LOG_FILE_NAME = 'log_train.txt'
 LOG_FOUT = open(os.path.join(LOG_DIR, LOG_FILE_NAME), 'w')
 LOG_FOUT.write(str(FLAGS)+'\n')
@@ -148,6 +152,31 @@ elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_reduced'.upper():
     print('Loading test data...')
     TEST_DATASET  = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
+elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_1000subj'.upper():
+    min_samples, max_samples = 2, -1
+    DATA_PATH = os.path.join('/experiments/BOVIFOCR_project/datasets/faces/3D_reconstruction_MICA/output/MS-Celeb-1M/ms1m-retinaface-t1/images_1000subj')
+    print('Loading train data...')
+    TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    print('Loading test data...')
+    TEST_DATASET  = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+
+elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_2000subj'.upper():
+    min_samples, max_samples = 2, -1
+    DATA_PATH = os.path.join('/experiments/BOVIFOCR_project/datasets/faces/3D_reconstruction_MICA/output/MS-Celeb-1M/ms1m-retinaface-t1/images_2000subj')
+    print('Loading train data...')
+    TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    print('Loading test data...')
+    TEST_DATASET  = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+
+elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_5000subj'.upper():
+    min_samples, max_samples = 2, -1
+    DATA_PATH = os.path.join('/experiments/BOVIFOCR_project/datasets/faces/3D_reconstruction_MICA/output/MS-Celeb-1M/ms1m-retinaface-t1/images_5000subj')
+    print('Loading train data...')
+    TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    print('Loading test data...')
+    TEST_DATASET  = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+
+
 
 # Bernardo
 assert TRAIN_DATASET.num_classes == TEST_DATASET.num_classes
@@ -200,9 +229,10 @@ def train():
             # Get model and loss 
             # pred, end_points = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=bn_decay)                         # original
             embd, end_points, weights_fc3 = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=bn_decay, num_class=NUM_CLASSES)    # Bernardo
-            pred, loss, classify_loss = MODEL.get_loss_arcface(embd, labels_pl, end_points, weights_fc3, TRAIN_DATASET.num_classes, FLAGS.margin_arc, float(FLAGS.scale_arc))
+            embds, pred, loss, classify_loss = MODEL.get_loss_arcface(embd, labels_pl, end_points, weights_fc3, TRAIN_DATASET.num_classes, FLAGS.margin_arc, float(FLAGS.scale_arc))
+            pred = embds   # TESTE
             # pred, loss, classify_loss = MODEL.get_loss_common_cross_entropy(embd, labels_pl, end_points, weights_fc3, TRAIN_DATASET.num_classes)
-            
+
             losses = tf.get_collection('losses')
             total_loss = tf.add_n(losses, name='total_loss')
             tf.summary.scalar('total_loss', total_loss)
@@ -416,6 +446,7 @@ def eval_test_one_epoch(sess, ops, test_writer):
     while TEST_DATASET.has_next_batch():
         batch_data, batch_label = TEST_DATASET.next_batch(augment=False)
         bsize = batch_data.shape[0]
+
         # for the last batch in the epoch, the bsize:end are from last batch
         cur_batch_data[0:bsize,...] = batch_data
         cur_batch_label[0:bsize] = batch_label
@@ -423,8 +454,10 @@ def eval_test_one_epoch(sess, ops, test_writer):
         feed_dict = {ops['pointclouds_pl']: cur_batch_data,
                      ops['labels_pl']: cur_batch_label,
                      ops['is_training_pl']: is_training}
+
         summary, step, loss_val, pred_val = sess.run([ops['merged'], ops['step'],
             ops['loss'], ops['pred']], feed_dict=feed_dict)
+            
         test_writer.add_summary(summary, step)
         pred_val = np.argmax(pred_val, 1)
         correct = np.sum(pred_val[0:bsize] == batch_label[0:bsize])
@@ -465,6 +498,13 @@ def plot_classification_training_history():
         title = 'PointNet++ training on MS1MV2-Reconst3D-MICA \nClassification (1:N) - '+str(NUM_CLASSES)+' classes - min_samples='+str(min_samples)+' - max_samples='+str(max_samples)
     elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_reduced'.upper():
         title = 'PointNet++ training on MS1MV2_reduced-Reconst3D-MICA \nClassification (1:N) - '+str(NUM_CLASSES)+' classes - min_samples='+str(min_samples)+' - max_samples='+str(max_samples)
+    elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_1000subj'.upper():
+        title = 'PointNet++ training on MS1MV2_1000subj-Reconst3D-MICA \nClassification (1:N) - '+str(NUM_CLASSES)+' classes - min_samples='+str(min_samples)+' - max_samples='+str(max_samples)
+    elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_2000subj'.upper():
+        title = 'PointNet++ training on MS1MV2_2000subj-Reconst3D-MICA \nClassification (1:N) - '+str(NUM_CLASSES)+' classes - min_samples='+str(min_samples)+' - max_samples='+str(max_samples)
+    elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_5000subj'.upper():
+        title = 'PointNet++ training on MS1MV2_5000subj-Reconst3D-MICA \nClassification (1:N) - '+str(NUM_CLASSES)+' classes - min_samples='+str(min_samples)+' - max_samples='+str(max_samples)
+
 
     subtitle = 'Parameters: ' + plots_fr_pointnet2.break_string(parameters, substring=', ', num_parts=4)
     # path_image = './training_history.png'

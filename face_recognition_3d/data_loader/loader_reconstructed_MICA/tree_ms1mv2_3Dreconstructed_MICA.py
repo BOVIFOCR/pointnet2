@@ -54,11 +54,13 @@ class TreeMS1MV2_3DReconstructedMICA:
         # print('all_sub_folders:', all_sub_folders)
         # print('len(all_sub_folders):', len(all_sub_folders))
         for sub_folder_pointcloud in all_sub_folders:
+            # print('sub_folder_pointcloud:', sub_folder_pointcloud)
             pc_paths = sorted(glob(sub_folder_pointcloud + '/*' + pc_ext))
+            # print('pc_paths:', pc_paths)
             if len(pc_paths) > 0:    # Added to prevent error
                 # print('pc_paths:', pc_paths)
                 assert len(pc_paths) > 0
-                pc_subjects = [pc_path.split('/')[-3] for pc_path in pc_paths]
+                pc_subjects = [pc_path.split('/')[-(dir_level+1)] for pc_path in pc_paths]
                 # print('pc_subjects:', pc_subjects)
                 assert len(pc_subjects) > 0
                 # print('----------------------')
@@ -70,14 +72,15 @@ class TreeMS1MV2_3DReconstructedMICA:
         assert len(all_pc_subjects) > 0
         return all_pc_paths, all_pc_subjects
 
-    def count_samples_per_subject(self, pc_paths_list=[''], pc_ext='.ply'):
+    def count_samples_per_subject(self, pc_paths_list=[''], dir_level=2, pc_ext='.ply'):
         unique_subjects_names = []
         samples_per_subject = []
         indexes_samples = []
         for i, pc_path in enumerate(sorted(pc_paths_list)):
+            print('%d/%d - %s' % (i, len(pc_paths_list), pc_path), end='\r')
             data_path = pc_path.split('/')
             if pc_ext in data_path[-1]:
-                subject_name = data_path[-3]
+                subject_name = data_path[-(dir_level+1)]
                 if not subject_name in unique_subjects_names:
                     samples_per_subject.append(0)
                     unique_subjects_names.append(subject_name)
@@ -86,11 +89,14 @@ class TreeMS1MV2_3DReconstructedMICA:
                 samples_per_subject[-1] += 1
                 indexes_samples[-1][1] += 1   # increment end index
         assert len(unique_subjects_names) == len(samples_per_subject)
+        print()
         return unique_subjects_names, samples_per_subject, indexes_samples
 
     def get_all_pointclouds_paths_count(self, dir_path, dir_level=2, pc_ext='.ply'):
+        print('get_all_pointclouds_paths_count() - getting all pointclouds paths ...')
         all_pc_paths, all_pc_subjects = self.get_all_pointclouds_paths(dir_path, dir_level, pc_ext)
-        unique_subjects_names, samples_per_subject, indexes_samples = self.count_samples_per_subject(all_pc_paths, pc_ext)
+        print('get_all_pointclouds_paths_count() - counting samples per subject ...')
+        unique_subjects_names, samples_per_subject, indexes_samples = self.count_samples_per_subject(all_pc_paths, dir_level, pc_ext)
         return all_pc_paths, all_pc_subjects, unique_subjects_names, samples_per_subject, indexes_samples
 
     def filter_paths_by_minimum_samples(self, all_pc_paths, all_pc_subjects, unique_subjects_names, samples_per_subject, pc_ext='.ply', min_samples=2, max_samples=-1):
@@ -100,6 +106,7 @@ class TreeMS1MV2_3DReconstructedMICA:
         filtered_samples_per_subject = []
         selected_samples_per_subject = [0] * len(unique_subjects_names)
         for i, pc_path, pc_subj in zip(range(len(all_pc_paths)), all_pc_paths, all_pc_subjects):
+            print('%d/%d - %s' % (i+1, len(all_pc_paths), pc_path), end='\r')
             if samples_per_subject[unique_subjects_names.index(pc_subj)] >= min_samples and \
                (max_samples==-1 or selected_samples_per_subject[unique_subjects_names.index(pc_subj)] < max_samples):
                 filtered_pc_paths.append(pc_path)
@@ -110,10 +117,12 @@ class TreeMS1MV2_3DReconstructedMICA:
         # filtered_samples_per_subject.append(samples_per_subject[unique_subjects_names.index(pc_subj)])
         filtered_samples_per_subject = [selected_samples_per_subject[unique_subjects_names.index(pc_subj)] for pc_subj in filtered_subjects_names]
         # print('selected_samples_per_subject:', selected_samples_per_subject)      
+        print()
         return filtered_pc_paths, filtered_pc_subjects, filtered_subjects_names, filtered_samples_per_subject
 
-    def load_filter_organize_pointclouds_paths(self, dir_path, pc_ext='.ply', min_samples=2, max_samples=-1):
-        all_pc_paths, all_pc_subjects, unique_subjects_names, samples_per_subject, indexes_samples = self.get_all_pointclouds_paths_count(dir_path, 2, pc_ext)
+    def load_filter_organize_pointclouds_paths(self, dir_path, dir_level=2, pc_ext='.ply', min_samples=2, max_samples=-1):
+        all_pc_paths, all_pc_subjects, unique_subjects_names, samples_per_subject, indexes_samples = self.get_all_pointclouds_paths_count(dir_path, dir_level=dir_level, pc_ext=pc_ext)
+        print('load_filter_organize_pointclouds_paths() - filtering paths by min and max samples ...')
         all_pc_paths, all_pc_subjects, unique_subjects_names, samples_per_subject = self.filter_paths_by_minimum_samples(all_pc_paths, all_pc_subjects, unique_subjects_names, samples_per_subject, pc_ext, min_samples, max_samples)
         subjects_with_pc_paths = [()] * len(all_pc_paths)
         for i, pc_path, pc_subj in zip(range(len(all_pc_paths)), all_pc_paths, all_pc_subjects):

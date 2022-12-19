@@ -17,7 +17,7 @@ import provider
 import struct
 from plyfile import PlyData
 
-from tree_ms1mv2_3Dreconstructed_MICA import TreeMS1MV2_3DReconstructedMICA
+from tree_calfw_3Dreconstructed_MICA import TreeCALFW_3DReconstructedMICA
 
 def pc_normalize(pc):
     # Bernardo
@@ -32,66 +32,46 @@ def pc_normalize(pc):
 
     return pc
 
-class MS1MV2_3D_Reconstructed_MICA_Dataset():
-    def __init__(self, root, batch_size = 32, npoints = 2900, min_samples=2, max_samples=-1, split='train', normalize=True, normal_channel=False, modelnet10=False, cache_size=15000, shuffle=None):
+class CALFW_3D_Reconstructed_MICA_Dataset_Pairs():
+    def __init__(self, root, batch_size = 32, npoints = 2900, split='train', normalize=True, normal_channel=False, modelnet10=False, cache_size=15000, shuffle=None):
         self.root = root
         self.batch_size = batch_size
         self.npoints = npoints
         self.normalize = normalize
-
+        self.normal_channel = normal_channel
+        
         # Bernardo
         # file_ext = '.ply'
         file_ext = 'mesh_centralized-nosetip_with-normals_filter-radius=100.npy'
         # file_ext = 'mesh_upsample_MetaPU_upsample_MetaPU_centralized-nosetip_with-normals_filter-radius=100.npy'
-        dir_level=2
-        subjects_with_pc_paths, unique_subjects_names, samples_per_subject = TreeMS1MV2_3DReconstructedMICA().load_filter_organize_pointclouds_paths(self.root, dir_level, file_ext, min_samples, max_samples)
-        assert len(unique_subjects_names) == len(samples_per_subject)
-        # for subj_pc_path in subjects_with_pc_paths:
-        #     print('subj_pc_path:', subj_pc_path)
-        # sys.exit(0)
-
-        self.cat = unique_subjects_names    # Bernardo
-        self.classes = dict(zip(self.cat, range(len(self.cat))))  
-        self.num_classes = len(unique_subjects_names)
-        self.normal_channel = normal_channel
-        # print('self.cat:', self.cat)
-        # print('self.classes:', self.classes)
-        print('self.num_classes:', self.num_classes)
-        # sys.exit(0)
-
+    
         # Bernardo
         assert(split=='train' or split=='test')
-        self.datapath = []
-
-        if split=='train':
-            last_index = 0
-            for samp_per_subj, uniq_subj_name in zip(samples_per_subject, unique_subjects_names):
-                amount_train_samples_subj = int(floor(samp_per_subj * 0.8))
-                train_subj_with_paths = []
-                for i in range(last_index, len(subjects_with_pc_paths)):
-                    if subjects_with_pc_paths[i][0] == uniq_subj_name:
-                        train_subj_with_paths.append(subjects_with_pc_paths[i])
-                        if len(train_subj_with_paths) == amount_train_samples_subj:
-                            last_index = i
-                            break
-                assert len(train_subj_with_paths) == amount_train_samples_subj
-                self.datapath += train_subj_with_paths
-                                
-        elif split=='test':
-            last_index = 0
-            for samp_per_subj, uniq_subj_name in zip(samples_per_subject, unique_subjects_names):
-                amount_train_samples_subj = int(floor(samp_per_subj * 0.8))
-                amount_test_samples_subj = samp_per_subj - amount_train_samples_subj
-                test_subj_with_paths = []
-                for i in range(last_index+amount_train_samples_subj, len(subjects_with_pc_paths)):
-                    if subjects_with_pc_paths[i][0] == uniq_subj_name:
-                        test_subj_with_paths.append(subjects_with_pc_paths[i])
-                        if len(test_subj_with_paths) == amount_test_samples_subj:
-                            last_index = i+1
-                            break
-                assert len(test_subj_with_paths) == amount_test_samples_subj
-                self.datapath += test_subj_with_paths
         
+        protocol_file_path = '/home/bjgbiesseck/GitHub/MICA/demo/input/calfw/pairs_CALFW.txt'
+        all_pos_pairs_paths, all_neg_pairs_paths, pos_pair_label, neg_pair_label = TreeCALFW_3DReconstructedMICA().load_pairs_samples_protocol_from_file(protocol_file_path, root, file_ext)
+
+        # if split=='train':
+        #     protocol_file_path = root + '/pairsDevTrain.txt'
+        #     all_pos_pairs_paths, all_neg_pairs_paths, pos_pair_label, neg_pair_label = TreeCALFW_3DReconstructedMICA().load_pairs_samples_protocol_from_file(protocol_file_path, root, file_ext)
+            
+        # elif split=='test':
+        #     protocol_file_path = root + '/pairsDevTest.txt'
+        #     all_pos_pairs_paths, all_neg_pairs_paths, pos_pair_label, neg_pair_label = TreeCALFW_3DReconstructedMICA().load_pairs_samples_protocol_from_file(protocol_file_path, root, file_ext)
+
+        self.datapath = []
+        self.datapath += all_pos_pairs_paths
+        self.datapath += all_neg_pairs_paths
+        
+        # self.cat = ['0', '1']    # Bernardo
+        self.cat = [neg_pair_label, pos_pair_label]    # Bernardo
+        self.classes = dict(zip(self.cat, range(len(self.cat))))  
+        self.num_classes = len(self.cat)
+        # print('self.cat:', self.cat)
+        # print('self.classes:', self.classes)
+        # print('self.num_classes:', self.num_classes)
+        # sys.exit(0)
+
         self.cache_size = cache_size # how many data points to cache in memory
         self.cache = {} # from index to (point_set, cls) tuple
 
@@ -138,34 +118,43 @@ class MS1MV2_3D_Reconstructed_MICA_Dataset():
 
     def _get_item(self, index): 
         if index in self.cache:
-            point_set, cls = self.cache[index]
+            point_set1, point_set2, cls = self.cache[index]
         else:
             fn = self.datapath[index]
             cls = self.classes[self.datapath[index][0]]
             cls = np.array([cls]).astype(np.int32)
 
             # Bernardo
-            # print('ms1mv2_3Dreconstructed_MICA_dataset.py: _get_item(): loading file:', fn[1])
+            print('lfw_3Dreconstructed_MICA_dataset.py: _get_item(): loading file:', fn[1])
+            print('lfw_3Dreconstructed_MICA_dataset.py: _get_item(): loading file:', fn[2])
+            print('label:', cls)
+            print('-------------------------')
 
             # point_set = np.loadtxt(fn[1],delimiter=',').astype(np.float32)   # original
             if fn[1].endswith('.npy'):
-                point_set = np.load(fn[1]).astype(np.float32)                    # Bernardo
+                point_set1 = np.load(fn[1]).astype(np.float32)                 # Bernardo
+                point_set2 = np.load(fn[2]).astype(np.float32)                 # Bernardo
             elif fn[1].endswith('.ply'):
-                point_set = self._readply(fn[1]).astype(np.float32)            # Bernardo
+                point_set1 = self._readply(fn[1]).astype(np.float32)           # Bernardo
+                point_set2 = self._readply(fn[2]).astype(np.float32)           # Bernardo
 
             # Bernardo
-            if point_set.shape[1] == 7:        # if contains curvature
-                point_set = point_set[:,:-1]   # remove curvature column
+            if point_set1.shape[1] == 7:        # if contains curvature
+                point_set1 = point_set1[:,:-1]  # remove curvature column
+                point_set2 = point_set2[:,:-1]  # remove curvature column
 
             # Take the first npoints
-            point_set = point_set[0:self.npoints,:]
+            point_set1 = point_set1[0:self.npoints,:]
+            point_set2 = point_set2[0:self.npoints,:]
             if self.normalize:
-                point_set[:,0:3] = pc_normalize(point_set[:,0:3])
+                point_set1[:,0:3] = pc_normalize(point_set1[:,0:3])
+                point_set2[:,0:3] = pc_normalize(point_set2[:,0:3])
             if not self.normal_channel:
-                point_set = point_set[:,0:3]
+                point_set1 = point_set1[:,0:3]
+                point_set2 = point_set2[:,0:3]
             if len(self.cache) < self.cache_size:
-                self.cache[index] = (point_set, cls)
-        return point_set, cls
+                self.cache[index] = (point_set1, point_set2, cls)
+        return point_set1, point_set2, cls
         
     def __getitem__(self, index):
         return self._get_item(index)
@@ -194,11 +183,25 @@ class MS1MV2_3D_Reconstructed_MICA_Dataset():
         start_idx = self.batch_idx * self.batch_size
         end_idx = min((self.batch_idx+1) * self.batch_size, len(self.datapath))
         bsize = end_idx - start_idx
-        batch_data = np.zeros((bsize, self.npoints, self.num_channel()))
+        # batch_data = np.zeros((bsize, self.npoints, self.num_channel()))
+        batch_data = np.zeros((2, bsize, self.npoints, self.num_channel()))
         batch_label = np.zeros((bsize), dtype=np.int32)
         for i in range(bsize):
-            ps,cls = self._get_item(self.idxs[i+start_idx])
-            batch_data[i] = ps
+            # ps,cls = self._get_item(self.idxs[i+start_idx])       # original
+            ps1, ps2, cls = self._get_item(self.idxs[i+start_idx])  # Bernardo
+
+            # # TESTE
+            # print('ps1:', ps1)
+            # print('ps1.shape:', ps1.shape)
+            # print('np.expand_dims(ps1, axis=1):', np.expand_dims(np.expand_dims(ps1, axis=0), axis=0).shape)
+            # sys.exit(0)
+
+            # batch_data[i] = ps      # original
+            batch_data[0, i] = ps1    # Bernardo
+            batch_data[1, i] = ps2    # Bernardo
+            # batch_data[0, i] = np.expand_dims(ps1, axis=0)    # Bernardo
+            # batch_data[1, i] = np.expand_dims(ps2, axis=0)    # Bernardo
+            
             batch_label[i] = cls
         self.batch_idx += 1
         if augment: batch_data = self._augment_batch_data(batch_data)
