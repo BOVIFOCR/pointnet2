@@ -42,9 +42,9 @@ parser.add_argument('--margin', type=float, default=0.5, help='Minimum distance 
 
 # parser.add_argument('--dataset', type=str, default='frgc', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='synthetic_gpmm', help='Name of dataset to train model')   # Bernardo
-# parser.add_argument('--dataset', type=str, default='reconst_mica_lfw', help='Name of dataset to train model')   # Bernardo
+parser.add_argument('--dataset', type=str, default='reconst_mica_lfw', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2', help='Name of dataset to train model')   # Bernardo
-parser.add_argument('--dataset', type=str, default='reconst_mica_calfw', help='Name of dataset to train model')   # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_mica_calfw', help='Name of dataset to train model')   # Bernardo
 
 FLAGS = parser.parse_args()
 
@@ -66,11 +66,11 @@ HOSTNAME = socket.gethostname()
 
 
 if FLAGS.dataset.upper() == 'reconst_mica_lfw'.upper():
-    DATA_PATH = os.path.join(ROOT_DIR, '../../MICA/demo/output/lfw')
+    DATA_PATH = os.path.join(ROOT_DIR, '../../BOVIFOCR_MICA_3Dreconstruction/demo/output/lfw')
     TRAIN_DATASET = lfw_3Dreconstructed_MICA_dataset_pairs.LFR_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, npoints=NUM_POINT, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
     TEST_DATASET  = lfw_3Dreconstructed_MICA_dataset_pairs.LFR_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, npoints=NUM_POINT, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 elif FLAGS.dataset.upper() == 'reconst_mica_calfw'.upper():
-    DATA_PATH = os.path.join(ROOT_DIR, '../../MICA/demo/output/calfw')
+    DATA_PATH = os.path.join(ROOT_DIR, '../../BOVIFOCR_MICA_3Dreconstruction/demo/output/calfw')
     TRAIN_DATASET = calfw_3Dreconstructed_MICA_dataset_pairs.CALFW_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, npoints=NUM_POINT, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
     TEST_DATASET  = calfw_3Dreconstructed_MICA_dataset_pairs.CALFW_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, npoints=NUM_POINT, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 

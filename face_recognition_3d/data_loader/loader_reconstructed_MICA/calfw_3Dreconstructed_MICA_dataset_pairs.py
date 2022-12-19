@@ -48,7 +48,7 @@ class CALFW_3D_Reconstructed_MICA_Dataset_Pairs():
         # Bernardo
         assert(split=='train' or split=='test')
         
-        protocol_file_path = '/home/bjgbiesseck/GitHub/MICA/demo/input/calfw/pairs_CALFW.txt'
+        protocol_file_path = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/calfw/pairs_CALFW.txt'
         all_pos_pairs_paths, all_neg_pairs_paths, pos_pair_label, neg_pair_label = TreeCALFW_3DReconstructedMICA().load_pairs_samples_protocol_from_file(protocol_file_path, root, file_ext)
 
         # if split=='train':
