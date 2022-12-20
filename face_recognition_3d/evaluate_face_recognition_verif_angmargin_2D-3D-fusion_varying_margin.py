@@ -54,6 +54,16 @@ FLAGS = parser.parse_args()
 
 
 NUM_CLASSES = 1000
+ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/lfw_distances_arcface=1000class_acc=0.93833.npy'
+
+# NUM_CLASSES = 2000
+# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/lfw_distances_arcface=2000class_acc=0.96333.npy'
+
+# NUM_CLASSES = 5000
+# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/lfw_distances_arcface=5000class_acc=0.97550.npy'
+
+
+
 BATCH_SIZE = FLAGS.batch_size
 NUM_POINT = FLAGS.num_point
 MODEL_PATH = FLAGS.model_path
@@ -95,7 +105,7 @@ def save_metric_to_text_file(path_file, all_margins_eval, all_tp_eval, all_fp_ev
             f.flush()
 
 # Bernardo
-def compute_all_embeddings_and_distances(sess, ops):
+def compute_all_embeddings_and_distances_pointnet2(sess, ops):
     is_training = False
 
     cur_batch_data = np.zeros((2,BATCH_SIZE,NUM_POINT,EVAL_DATASET.num_channel()))
@@ -142,6 +152,13 @@ def compute_all_embeddings_and_distances(sess, ops):
     return all_distances
 
 
+def fuse_scores(distances1, distances2):
+    distances1 /= np.max(distances1)
+    distances2 /= np.max(distances2)
+    final_distances = (distances1 + distances2) / 2
+    return final_distances
+
+
 # Bernardo
 def evaluate_varying_margin(num_votes):
     is_training = False
@@ -183,9 +200,18 @@ def evaluate_varying_margin(num_votes):
            'end_points': end_points}
 
 
-    print('Computing all embeddings and distances...')
-    all_distances = compute_all_embeddings_and_distances(sess, ops)
+    print('PointNet++ (3D) - Computing all embeddings and distances...')
+    all_distances_pointnet2 = compute_all_embeddings_and_distances_pointnet2(sess, ops)
+
+    print('ArcFace (2D) - Loading distances from file: ')
+    all_distances_arcface = np.load(ARCFACE_DISTANCES_FILE)
+    print('all_distances_arcface.shape:', all_distances_arcface.shape)
     
+    print('Fusing distances...')
+    final_distances = fuse_scores(all_distances_arcface, all_distances_pointnet2)
+    print('final_distances.shape:', final_distances.shape)
+
+
 
     min_margin, max_margin, step_margin = 0, 1, 0.005
     # min_margin, max_margin, step_margin = 0, 1, 0.01
@@ -203,7 +229,7 @@ def evaluate_varying_margin(num_votes):
 
     for i, margin in enumerate(all_margins_eval):
         print(str(i) + '/' + str(len(all_margins_eval)-1) + ' - Evaluating dataset \'' + FLAGS.dataset + '\', margin=' + str(margin) + ' ...')
-        tp, tn, fp, fn, acc, far, tar = eval_one_epoch(all_distances, margin)
+        tp, tn, fp, fn, acc, far, tar = eval_one_epoch(final_distances, margin)
         all_tp_eval[i] = tp
         all_tn_eval[i] = tn
         all_fp_eval[i] = fp
