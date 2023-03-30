@@ -117,6 +117,42 @@ class TreeCALFW_3DReconstructedMICA:
             return all_pos_pairs_paths, all_neg_pairs_paths, pos_pair_label, neg_pair_label
 
 
+    def load_all_pairs_samples_from_protocol_file(self, protocol_file_path='pairs_CALFW.txt', dataset_path='', file_ext='.ply'):
+        pos_pair_label = '1'
+        neg_pair_label = '0'
+        all_pairs_paths_label = []
+        
+        intermediate_dataset_path = 'images&landmarks/images&landmarks/images'
+
+        with open(protocol_file_path, 'r') as fp:
+            all_lines = [line.strip() for line in fp.readlines()]
+            # all_lines = [line.rstrip('\r\n') for line in fp.readlines()]
+            # print('all_lines:', all_lines)
+            # sys.exit(0)
+
+            for i in range(0,len(all_lines),2):
+                sample_1, label1 = all_lines[i].split(' ')
+                sample_2, label2 = all_lines[i+1].split(' ')
+                assert label1 == label2
+
+                sample_name1 = sample_1.split('.')[0]
+                sample_name2 = sample_2.split('.')[0]
+                # print('sample_name1:', sample_name1, '    label1: \''+label1+'\'')
+                # print('sample_name2:', sample_name2, '    label2: \''+label2+'\'')
+
+                path_sample1 = glob(os.path.join(dataset_path, intermediate_dataset_path, sample_name1, '*'+file_ext))[0]
+                path_sample2 = glob(os.path.join(dataset_path, intermediate_dataset_path, sample_name2, '*'+file_ext))[0]
+
+                if label1 != '0':   # positive pair
+                    pair = (pos_pair_label, path_sample1, path_sample2)
+                else:    # negative pair
+                    pair = (neg_pair_label, path_sample1, path_sample2)
+                    
+                all_pairs_paths_label.append(pair)
+
+            return all_pairs_paths_label, pos_pair_label, neg_pair_label
+
+
 if __name__ == '__main__':
     dataset_path = '/home/bjgbiesseck/GitHub/MICA/demo/output/calfw'
     

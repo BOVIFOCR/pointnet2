@@ -22,8 +22,8 @@ import provider
 # import modelnet_dataset
 # import modelnet_h5_dataset
 
-from data_loader.loader_reconstructed_MICA import lfw_evaluation_3Dreconstructed_MICA_dataset_pairs    # Bernardo
-from data_loader.loader_reconstructed_MICA import calfw_3Dreconstructed_MICA_dataset_pairs             # Bernardo
+from data_loader.loader_reconstructed_MICA import lfw_evaluation_3Dreconstructed_MICA_dataset_pairs      # Bernardo
+from data_loader.loader_reconstructed_MICA import calfw_evaluation_3Dreconstructed_MICA_dataset_pairs    # Bernardo
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 0]')
@@ -34,8 +34,8 @@ parser.add_argument('--batch_size', type=int, default=16, help='Batch Size durin
 parser.add_argument('--num_point', type=int, default=2900, help='Point Number [default: 1024]')      # Bernardo
 
 # parser.add_argument('--model_path', default='log/model.ckpt', help='model checkpoint file path [default: log/model.ckpt]')   # original
-parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-1000subj_batch=16_margin=0.0/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
-# parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-2000subj_batch=16_margin=0.0/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
+# parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-1000subj_batch=16_margin=0.0/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
+parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-2000subj_batch=16_margin=0.0/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 # parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-5000subj_batch=16_margin=0.0/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 
 parser.add_argument('--dump_dir', default='dump', help='dump folder path [dump]')
@@ -46,21 +46,24 @@ parser.add_argument('--margin', type=float, default=0.5, help='Minimum distance 
 
 # parser.add_argument('--dataset', type=str, default='frgc', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='synthetic_gpmm', help='Name of dataset to train model')   # Bernardo
-parser.add_argument('--dataset', type=str, default='reconst_mica_lfw', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2', help='Name of dataset to train model')   # Bernardo
-# parser.add_argument('--dataset', type=str, default='reconst_mica_calfw', help='Name of dataset to train model')   # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_mica_lfw', help='Name of dataset to train model')   # Bernardo
+parser.add_argument('--dataset', type=str, default='reconst_mica_calfw', help='Name of dataset to train model')   # Bernardo
 
 FLAGS = parser.parse_args()
 
 
-NUM_CLASSES = 1000
-ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/lfw_distances_arcface=1000class_acc=0.93833.npy'
+# NUM_CLASSES = 1000
+# # ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/lfw_distances_arcface=1000class_acc=0.93833.npy'
+# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/calfw_distances_arcface=1000class_acc=0.82333.npy'
 
-# NUM_CLASSES = 2000
+NUM_CLASSES = 2000
 # ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/lfw_distances_arcface=2000class_acc=0.96333.npy'
+ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/calfw_distances_arcface=2000class_acc=0.86750.npy'
 
 # NUM_CLASSES = 5000
 # ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/lfw_distances_arcface=5000class_acc=0.97550.npy'
+# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/calfw_distances_arcface=5000class_acc=0.87900.npy'
 
 
 
@@ -85,8 +88,7 @@ if FLAGS.dataset.upper() == 'reconst_mica_lfw'.upper():
     
 elif FLAGS.dataset.upper() == 'reconst_mica_calfw'.upper():
     DATA_PATH = os.path.join(ROOT_DIR, '../../BOVIFOCR_MICA_3Dreconstruction/demo/output/calfw')
-    TRAIN_DATASET = calfw_3Dreconstructed_MICA_dataset_pairs.CALFW_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, npoints=NUM_POINT, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
-    TEST_DATASET  = calfw_3Dreconstructed_MICA_dataset_pairs.CALFW_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, npoints=NUM_POINT, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    EVAL_DATASET = calfw_evaluation_3Dreconstructed_MICA_dataset_pairs.CALFW_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
 
 
@@ -205,13 +207,10 @@ def evaluate_varying_margin(num_votes):
 
     print('ArcFace (2D) - Loading distances from file: ')
     all_distances_arcface = np.load(ARCFACE_DISTANCES_FILE)
-    print('all_distances_arcface.shape:', all_distances_arcface.shape)
-    
+
     print('Fusing distances...')
     final_distances = fuse_scores(all_distances_arcface, all_distances_pointnet2)
     print('final_distances.shape:', final_distances.shape)
-
-
 
     min_margin, max_margin, step_margin = 0, 1, 0.005
     # min_margin, max_margin, step_margin = 0, 1, 0.01
@@ -237,12 +236,12 @@ def evaluate_varying_margin(num_votes):
         all_acc_eval[i] = acc
         all_far_eval[i] = far
         all_tar_eval[i] = tar
-        print('    margin:', margin, '   tp:', tp, '   tn', tn, '   fp', fp, '   fn', fn, '   acc', acc, '   far', far, '   tar', tar)
+        print('    margin: %1.5f    tp: %d    tn: %d    fp: %d    fn: %d    acc: %1.5f    far: %1.5f    tar: %1.5f' % (margin, tp, tn, fp, fn, acc, far, tar))
         print('-------------------------')
     
-    print('Evaluation of dataset \'' + FLAGS.dataset + '\'')
-    for i, margin in enumerate(all_margins_eval):
-        print('margin:', margin, '    tp:', all_tp_eval[i], '   tn', all_tn_eval[i], '   fp', all_fp_eval[i], '   fn', all_fn_eval[i], '   acc', all_acc_eval[i], '   far', all_far_eval[i], '   tar', all_tar_eval[i])
+    # print('Evaluation of dataset \'' + FLAGS.dataset + '\'')
+    # for i, margin in enumerate(all_margins_eval):
+    #     print('margin:', margin, '    tp:', all_tp_eval[i], '   tn', all_tn_eval[i], '   fp', all_fp_eval[i], '   fn', all_fn_eval[i], '   acc', all_acc_eval[i], '   far', all_far_eval[i], '   tar', all_tar_eval[i])
 
     path_file = '/'.join(MODEL_PATH.split('/')[:-1]) + '/' + 'evaluation_on_dataset=' + FLAGS.dataset + '.csv'
     print('Saving to CSV file:', path_file)
