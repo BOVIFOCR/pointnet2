@@ -44,6 +44,9 @@ def get_model(point_cloud, is_training, bn_decay=None, num_class=0):
         # Fully connected layers
         net = tf.reshape(l3_points, [batch_size, -1])
 
+
+        # Commented to test PointNet++ with only one classification layer
+        '''
         with tf.variable_scope("fully_connected1") as scope:
             net, weights_fc1 = tf_util_angmargin.fully_connected(net, 512, bn=True, is_training=is_training, scope='fc1', bn_decay=bn_decay)
             
@@ -55,10 +58,12 @@ def get_model(point_cloud, is_training, bn_decay=None, num_class=0):
             
         with tf.variable_scope("dropout2") as scope:
             net = tf_util_angmargin.dropout(net, keep_prob=0.5, is_training=is_training, scope='dp2')
-        
+        '''
         with tf.variable_scope("fully_connected3") as scope:
             # net = tf_util.fully_connected(net, 40, activation_fn=None, scope='fc3')        # original
             net, weights_fc3 = tf_util_angmargin.fully_connected(net, num_class, activation_fn=None, scope='fc3')   # Bernardo
+        
+
 
         # Add one more layer to implement angular margin
         with tf.variable_scope("fully_connected4") as scope:
