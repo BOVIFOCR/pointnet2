@@ -13,7 +13,7 @@ from plots import plots_fr_pointnet2
 
 # BERNARDO
 class TreeMS1MV2_3DReconstructedMICA:
-    
+
     def get_all_sub_folders(self, dir_path='', dir_level=2):
         return sorted(glob(dir_path + '/*'*dir_level))
 
@@ -21,32 +21,7 @@ class TreeMS1MV2_3DReconstructedMICA:
         # sub_folders = [f.path for f in os.scandir(dir_path) if f.is_dir()]
         sub_folders = [f.name for f in os.scandir(dir_path) if f.is_dir()]
         return sorted(sub_folders)
-    
-    '''
-    def get_all_pointclouds_paths(self, dir_path, dir_level=2, pc_ext='.ply'):
-        all_sub_folders = self.get_all_sub_folders(dir_path, dir_level)
-        all_pc_paths = []
-        all_pc_subjects = []
-        print('all_sub_folders:', all_sub_folders)
-        print('len(all_sub_folders):', len(all_sub_folders))
-        for sub_folder_pointcloud in all_sub_folders:
-            pc_paths = sorted(glob(sub_folder_pointcloud + '/*' + pc_ext))
-            print('pc_paths:', pc_paths)
-            assert len(pc_paths) > 0
-            pc_subjects = [pc_path.split('/')[-3] for pc_path in pc_paths]
-            print('pc_subjects:', pc_subjects)
-            assert len(pc_subjects) > 0
-            print('----------------------')
-            # raw_input('PAUSED')
-            all_pc_paths += pc_paths
-            all_pc_subjects += pc_subjects
-        
-        assert len(all_pc_paths) > 0
-        assert len(all_pc_subjects) > 0
-        return all_pc_paths, all_pc_subjects
-    '''
 
-    # TEMP WHILE FACES ARE BEING RECONSTRUCTED BY MICA
     def get_all_pointclouds_paths(self, dir_path, dir_level=2, pc_ext='.ply'):
         all_sub_folders = self.get_all_sub_folders(dir_path, dir_level)
         all_pc_paths = []
@@ -54,23 +29,46 @@ class TreeMS1MV2_3DReconstructedMICA:
         # print('all_sub_folders:', all_sub_folders)
         # print('len(all_sub_folders):', len(all_sub_folders))
         for sub_folder_pointcloud in all_sub_folders:
-            # print('sub_folder_pointcloud:', sub_folder_pointcloud)
             pc_paths = sorted(glob(sub_folder_pointcloud + '/*' + pc_ext))
             # print('pc_paths:', pc_paths)
-            if len(pc_paths) > 0:    # Added to prevent error
-                # print('pc_paths:', pc_paths)
-                assert len(pc_paths) > 0
-                pc_subjects = [pc_path.split('/')[-(dir_level+1)] for pc_path in pc_paths]
-                # print('pc_subjects:', pc_subjects)
-                assert len(pc_subjects) > 0
-                # print('----------------------')
-                # raw_input('PAUSED')
-                all_pc_paths += pc_paths
-                all_pc_subjects += pc_subjects
+            assert len(pc_paths) > 0
+            pc_subjects = [pc_path.split('/')[-(dir_level+1)] for pc_path in pc_paths]
+            # print('pc_subjects:', pc_subjects)
+            assert len(pc_subjects) > 0
+            # print('----------------------')
+            # raw_input('PAUSED')
+            all_pc_paths += pc_paths
+            all_pc_subjects += pc_subjects
         
         assert len(all_pc_paths) > 0
         assert len(all_pc_subjects) > 0
         return all_pc_paths, all_pc_subjects
+
+    # # TEMP WHILE FACES ARE BEING RECONSTRUCTED BY MICA
+    # def get_all_pointclouds_paths(self, dir_path, dir_level=2, pc_ext='.ply'):
+    #     all_sub_folders = self.get_all_sub_folders(dir_path, dir_level)
+    #     all_pc_paths = []
+    #     all_pc_subjects = []
+    #     # print('all_sub_folders:', all_sub_folders)
+    #     # print('len(all_sub_folders):', len(all_sub_folders))
+    #     for sub_folder_pointcloud in all_sub_folders:
+    #         # print('sub_folder_pointcloud:', sub_folder_pointcloud)
+    #         pc_paths = sorted(glob(sub_folder_pointcloud + '/*' + pc_ext))
+    #         # print('pc_paths:', pc_paths)
+    #         if len(pc_paths) > 0:    # Added to prevent error
+    #             # print('pc_paths:', pc_paths)
+    #             assert len(pc_paths) > 0
+    #             pc_subjects = [pc_path.split('/')[-(dir_level+1)] for pc_path in pc_paths]
+    #             # print('pc_subjects:', pc_subjects)
+    #             assert len(pc_subjects) > 0
+    #             # print('----------------------')
+    #             # raw_input('PAUSED')
+    #             all_pc_paths += pc_paths
+    #             all_pc_subjects += pc_subjects
+        
+    #     assert len(all_pc_paths) > 0
+    #     assert len(all_pc_subjects) > 0
+    #     return all_pc_paths, all_pc_subjects
 
     def count_samples_per_subject(self, pc_paths_list=[''], dir_level=2, pc_ext='.ply'):
         unique_subjects_names = []

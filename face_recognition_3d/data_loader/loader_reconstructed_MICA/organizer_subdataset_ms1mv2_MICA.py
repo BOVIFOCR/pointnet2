@@ -28,48 +28,44 @@ def make_symbolic_links_folders(src_path='', folders_names=[''], limit_folders=1
 
 if __name__ == '__main__':
     # For RGB images
-    # src_path = '/experiments/BOVIFOCR_project/datasets/faces/MS-Celeb-1M/ms1m-retinaface-t1/images'    # RGB images
-    # dir_level = 1    # for RGB images
-    # file_ext = '.png'
+    src_path = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/images'    # RGB images
+    dir_level = 1    # for RGB images
+    file_ext = '.png'
     
     # For 3D pointclouds
-    src_path = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images'    # Pointclouds
-    dir_level = 2      # for pointclouds
-    file_ext = '_centralized-nosetip_with-normals_filter-radius=100.npy'
+    # src_path = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images'    # Pointclouds
+    # dir_level = 2      # for pointclouds
+    # file_ext = '_centralized-nosetip_with-normals_filter-radius=100.npy'
     # file_ext = 'mesh.ply'
 
     min_samples, max_samples = 2, -1
 
 
     print('Searching all files ending with \'' + file_ext + '\' in \'' + src_path + '\' ...')
-    # all_pc_paths, all_pc_subjects, unique_subjects_names, samples_per_subject, indexes_samples = TreeMS1MV2_3DReconstructedMICA().get_all_pointclouds_paths_count(src_path, dir_level, file_ext)
     subjects_with_pc_paths, unique_subjects_names, samples_per_subject = TreeMS1MV2_3DReconstructedMICA().load_filter_organize_pointclouds_paths(src_path, dir_level, file_ext, min_samples, max_samples)
 
-    # for uniq_subject_name, samp_per_subject in zip(unique_subjects_names, samples_per_subject):
-    #     print('uniq_subject_name:', uniq_subject_name, '    samp_per_subject:', samp_per_subject)
-    # print('len(subjects_with_pc_paths):', len(subjects_with_pc_paths))
     print('len(unique_subjects_names):', len(unique_subjects_names))
     print('len(samples_per_subject):', len(samples_per_subject))
 
 
 
 
-    path_target_symb_links = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_1000subj'
+    path_target_symb_links = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/images_1000subj'
     num_subjects_symb_links = 1000
     print('\nMaking %s symbolic links...' % (num_subjects_symb_links))
     make_symbolic_links_folders(src_path, unique_subjects_names, num_subjects_symb_links, path_target_symb_links)
 
-    path_target_symb_links = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_2000subj'
+    path_target_symb_links = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/images_2000subj'
     num_subjects_symb_links = 2000
     print('\nMaking %s symbolic links...' % (num_subjects_symb_links))
     make_symbolic_links_folders(src_path, unique_subjects_names, num_subjects_symb_links, path_target_symb_links)
 
-    path_target_symb_links = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_5000subj'
+    path_target_symb_links = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/images_5000subj'
     num_subjects_symb_links = 5000
     print('\nMaking %s symbolic links...' % (num_subjects_symb_links))
     make_symbolic_links_folders(src_path, unique_subjects_names, num_subjects_symb_links, path_target_symb_links)
 
-    path_target_symb_links = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_10000subj'
+    path_target_symb_links = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/images_10000subj'
     num_subjects_symb_links = 10000
     print('\nMaking %s symbolic links...' % (num_subjects_symb_links))
     make_symbolic_links_folders(src_path, unique_subjects_names, num_subjects_symb_links, path_target_symb_links)
