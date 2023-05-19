@@ -47,14 +47,14 @@ parser.add_argument('--log_dir', default='log_face_recognition', help='Log dir [
 # parser.add_argument('--num_point', type=int, default=1024, help='Point Number [default: 1024]')    # original
 parser.add_argument('--num_point', type=int, default=2900, help='Point Number [default: 1024]')      # Bernardo
 parser.add_argument('--max_epoch', type=int, default=100, help='Epoch to run [default: 251]')
-# parser.add_argument('--batch_size', type=int, default=16, help='Batch Size during training [default: 16]')  # original
-parser.add_argument('--batch_size', type=int, default=8, help='Batch Size during training [default: 32]')    # Bernardo
-parser.add_argument('--learning_rate', type=float, default=0.001, help='Initial learning rate [default: 0.001]')
+parser.add_argument('--batch_size', type=int, default=16, help='Batch Size during training [default: 16]')  # original
+# parser.add_argument('--batch_size', type=int, default=8, help='Batch Size during training [default: 32]')    # Bernardo
+parser.add_argument('--learning_rate', type=float, default=5e-05, help='Initial learning rate [default: 0.001]')
 parser.add_argument('--momentum', type=float, default=0.9, help='Initial learning rate [default: 0.9]')
 parser.add_argument('--optimizer', default='adam', help='adam or momentum [default: adam]')
 parser.add_argument('--decay_step', type=int, default=200000, help='Decay step for lr decay [default: 200000]')
 parser.add_argument('--decay_rate', type=float, default=0.7, help='Decay rate for lr decay [default: 0.7]')
-parser.add_argument('--margin_arc', type=float, default=0.5, help='Margin m for ArcFace')
+parser.add_argument('--margin_arc', type=float, default=0.0, help='Margin m for ArcFace')
 parser.add_argument('--scale_arc', type=float, default=32, help='Scale s for ArcFace')
 
 # parser.add_argument('--normal', action='store_true', help='Whether to use normal information')     # original
@@ -66,9 +66,9 @@ parser.add_argument('--normal', type=bool, default=False, help='Whether to use n
 # parser.add_argument('--dataset', type=str, default='reconst_mica_lfw', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_reduced', help='Name of dataset to train model')   # Bernardo
-# parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_1000subj', help='Name of dataset to train model')   # Bernardo
+parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_1000subj', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_2000subj', help='Name of dataset to train model')   # Bernardo
-parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_5000subj', help='Name of dataset to train model')   # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_5000subj', help='Name of dataset to train model')   # Bernardo
 
 
 FLAGS = parser.parse_args()
@@ -136,7 +136,7 @@ elif FLAGS.dataset.upper() == 'reconst_mica_lfw'.upper():
     TEST_DATASET  = lfw_3Dreconstructed_MICA_dataset.LFR_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
 elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2'.upper():
-    min_samples, max_samples = 3, -1
+    min_samples, max_samples = 2, -1
     
     DATA_PATH = os.path.join(ROOT_DIR, '../../MICA/demo/output/MS-Celeb-1M/ms1m-retinaface-t1/images')
     print('Loading train data...')
@@ -145,7 +145,7 @@ elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2'.upper():
     TEST_DATASET  = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
 elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_reduced'.upper():
-    min_samples, max_samples = 3, -1
+    min_samples, max_samples = 2, -1
     DATA_PATH = os.path.join(ROOT_DIR, '../../MICA/demo/output/MS-Celeb-1M/ms1m-retinaface-t1/images_reduced')
     print('Loading train data...')
     TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
@@ -154,7 +154,8 @@ elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_reduced'.upper():
 
 elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_1000subj'.upper():
     min_samples, max_samples = 2, -1
-    DATA_PATH = os.path.join('/experiments/BOVIFOCR_project/datasets/faces/3D_reconstruction_MICA/output/MS-Celeb-1M/ms1m-retinaface-t1/images_1000subj')
+    # DATA_PATH = os.path.join('/experiments/BOVIFOCR_project/datasets/faces/3D_reconstruction_MICA/output/MS-Celeb-1M/ms1m-retinaface-t1/images_1000subj')
+    DATA_PATH = os.path.join('/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_1000subj')
     print('Loading train data...')
     TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
     print('Loading test data...')
@@ -230,7 +231,7 @@ def train():
             # pred, end_points = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=bn_decay)                         # original
             embd, end_points, weights_fc3 = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=bn_decay, num_class=NUM_CLASSES)    # Bernardo
             embds, pred, loss, classify_loss = MODEL.get_loss_arcface(embd, labels_pl, end_points, weights_fc3, TRAIN_DATASET.num_classes, FLAGS.margin_arc, float(FLAGS.scale_arc))
-            pred = embds   # TESTE
+            # pred = embds   # TESTE
             # pred, loss, classify_loss = MODEL.get_loss_common_cross_entropy(embd, labels_pl, end_points, weights_fc3, TRAIN_DATASET.num_classes)
 
             losses = tf.get_collection('losses')

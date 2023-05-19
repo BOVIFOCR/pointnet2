@@ -35,8 +35,9 @@ parser.add_argument('--num_point', type=int, default=2900, help='Point Number [d
 
 # parser.add_argument('--model_path', default='log/model.ckpt', help='model checkpoint file path [default: log/model.ckpt]')   # original
 # parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-1000subj_batch=16_margin=0.0/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
-parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-2000subj_batch=16_margin=0.0/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
+# parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-2000subj_batch=16_margin=0.0/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 # parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-5000subj_batch=16_margin=0.0/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
+parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-1000subj_batch=16_margin=0.0_classification-layer=1/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 
 parser.add_argument('--dump_dir', default='dump', help='dump folder path [dump]')
 # parser.add_argument('--normal', action='store_true', help='Whether to use normal information')      # original
@@ -46,20 +47,20 @@ parser.add_argument('--margin', type=float, default=0.5, help='Minimum distance 
 
 # parser.add_argument('--dataset', type=str, default='frgc', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='synthetic_gpmm', help='Name of dataset to train model')   # Bernardo
-# parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2', help='Name of dataset to train model')   # Bernardo
-# parser.add_argument('--dataset', type=str, default='reconst_mica_lfw', help='Name of dataset to train model')   # Bernardo
-parser.add_argument('--dataset', type=str, default='reconst_mica_calfw', help='Name of dataset to train model')   # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2', help='Name of dataset to train model')  # Bernardo
+parser.add_argument('--dataset', type=str, default='reconst_mica_lfw', help='Name of dataset to train model')       # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_mica_calfw', help='Name of dataset to train model')   # Bernardo
 
 FLAGS = parser.parse_args()
 
 
-# NUM_CLASSES = 1000
-# # ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/lfw_distances_arcface=1000class_acc=0.93833.npy'
+NUM_CLASSES = 1000
+ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/lfw_distances_arcface=1000class_acc=0.93833.npy'
 # ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/calfw_distances_arcface=1000class_acc=0.82333.npy'
 
-NUM_CLASSES = 2000
-# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/lfw_distances_arcface=2000class_acc=0.96333.npy'
-ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/calfw_distances_arcface=2000class_acc=0.86750.npy'
+# NUM_CLASSES = 2000
+# # ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/lfw_distances_arcface=2000class_acc=0.96333.npy'
+# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/calfw_distances_arcface=2000class_acc=0.86750.npy'
 
 # NUM_CLASSES = 5000
 # ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/lfw_distances_arcface=5000class_acc=0.97550.npy'
@@ -83,7 +84,8 @@ HOSTNAME = socket.gethostname()
 
 
 if FLAGS.dataset.upper() == 'reconst_mica_lfw'.upper():
-    DATA_PATH = os.path.join(ROOT_DIR, '../../BOVIFOCR_MICA_3Dreconstruction/demo/output/lfw')
+    # DATA_PATH = os.path.join(ROOT_DIR, '../../BOVIFOCR_MICA_3Dreconstruction/demo/output/lfw')
+    DATA_PATH = os.path.join(ROOT_DIR, '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/lfw')
     EVAL_DATASET = lfw_evaluation_3Dreconstructed_MICA_dataset_pairs.LFW_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
     
 elif FLAGS.dataset.upper() == 'reconst_mica_calfw'.upper():
