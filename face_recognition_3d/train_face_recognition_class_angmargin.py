@@ -315,12 +315,16 @@ def train():
             log_string('**** EPOCH %03d ****' % (epoch))
             sys.stdout.flush()
             
-            if epoch > 0:
-                train_one_epoch(sess, ops, train_writer)
+            # Commented to reduce time when training with 10,000 classes
+            # if epoch > 0:
+            #     train_one_epoch(sess, ops, train_writer)
+
+            # Modified to reduce time when training with 10,000 classes
+            loss_sum, train_mean_loss, train_accuracy, train_avg_class_acc = train_one_epoch(sess, ops, train_writer)
 
             # train_one_epoch(sess, ops, train_writer)
             # eval_one_epoch(sess, ops, test_writer)
-            loss_sum, train_mean_loss, train_accuracy, train_avg_class_acc = eval_train_one_epoch(sess, ops, train_writer)
+            # loss_sum, train_mean_loss, train_accuracy, train_avg_class_acc = eval_train_one_epoch(sess, ops, train_writer)   # Commented to reduce time when training with 10,000 classes
             loss_sum, test_mean_loss, test_accuracy, test_avg_class_acc = eval_test_one_epoch(sess, ops, test_writer)
             log_string('')
 
@@ -358,7 +362,12 @@ def train_one_epoch(sess, ops, train_writer):
     total_seen = 0
     loss_sum = 0
     batch_idx = 0
+    total_seen_class = [0 for _ in range(NUM_CLASSES)]
+    total_correct_class = [0 for _ in range(NUM_CLASSES)]
     num_batches = TRAIN_DATASET.__len__() / BATCH_SIZE
+
+    log_string(str(datetime.now()))
+    log_string('---- EPOCH %03d TRAINING ----'%(EPOCH_CNT))
 
     while TRAIN_DATASET.has_next_batch():
         print('batch_idx: %d/%d' % (batch_idx, num_batches), end='\r')
@@ -390,8 +399,23 @@ def train_one_epoch(sess, ops, train_writer):
         #     total_seen = 0
         #     loss_sum = 0
         batch_idx += 1
+        for i in range(0, bsize):
+            l = batch_label[i]
+            total_seen_class[l] += 1
+            total_correct_class[l] += (pred_val[i] == l)
+
+    print('')
+
+    train_mean_loss = loss_sum / float(batch_idx)
+    train_accuracy = total_correct / float(total_seen)
+    train_avg_class_acc = np.mean(np.array(total_correct_class)/np.array(total_seen_class,dtype=np.float))
+    log_string('train loss sum: %f' % (loss_sum))
+    log_string('train mean loss: %f' % (train_mean_loss))
+    log_string('train accuracy: %f'% (train_accuracy))
+    log_string('train avg class acc: %f' % (train_avg_class_acc))
 
     TRAIN_DATASET.reset()
+    return loss_sum, train_mean_loss, train_accuracy, train_avg_class_acc
 
 
 
@@ -474,11 +498,14 @@ def eval_test_one_epoch(sess, ops, test_writer):
     shape_ious = []
     total_seen_class = [0 for _ in range(NUM_CLASSES)]
     total_correct_class = [0 for _ in range(NUM_CLASSES)]
+    num_batches = TEST_DATASET.__len__() / BATCH_SIZE
     
     log_string(str(datetime.now()))
     log_string('---- EPOCH %03d TEST EVALUATION ----'%(EPOCH_CNT))
     
     while TEST_DATASET.has_next_batch():
+        print('batch_idx: %d/%d' % (batch_idx, num_batches), end='\r')
+
         batch_data, batch_label = TEST_DATASET.next_batch(augment=False)
         bsize = batch_data.shape[0]
 
