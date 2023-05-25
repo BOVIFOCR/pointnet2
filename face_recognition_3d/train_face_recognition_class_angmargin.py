@@ -7,6 +7,7 @@ from __future__ import print_function
 import argparse
 import math
 from datetime import datetime
+import time
 import h5py
 import numpy as np
 import tensorflow as tf
@@ -43,11 +44,11 @@ from data_loader.loader_reconstructed_MICA import ms1mv2_3Dreconstructed_MICA_da
 parser = argparse.ArgumentParser()
 parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 0]')
 parser.add_argument('--model', default='pointnet2_cls_ssg_angmargin', help='Model name [default: pointnet2_cls_ssg]')
-parser.add_argument('--log_dir', default='log_face_recognition', help='Log dir [default: log]')
+parser.add_argument('--log_dir', default='', help='Log dir [default: log]')
 # parser.add_argument('--num_point', type=int, default=1024, help='Point Number [default: 1024]')    # original
 parser.add_argument('--num_point', type=int, default=2900, help='Point Number [default: 1024]')      # Bernardo
 parser.add_argument('--max_epoch', type=int, default=100, help='Epoch to run [default: 251]')
-parser.add_argument('--batch_size', type=int, default=16, help='Batch Size during training [default: 16]')  # original
+parser.add_argument('--batch_size', type=int, default=32, help='Batch Size during training [default: 16]')  # original
 # parser.add_argument('--batch_size', type=int, default=8, help='Batch Size during training [default: 32]')    # Bernardo
 parser.add_argument('--learning_rate', type=float, default=5e-05, help='Initial learning rate [default: 0.001]')
 parser.add_argument('--momentum', type=float, default=0.9, help='Initial learning rate [default: 0.9]')
@@ -66,9 +67,10 @@ parser.add_argument('--normal', type=bool, default=False, help='Whether to use n
 # parser.add_argument('--dataset', type=str, default='reconst_mica_lfw', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_reduced', help='Name of dataset to train model')   # Bernardo
-parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_1000subj', help='Name of dataset to train model')   # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_1000subj', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_2000subj', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_5000subj', help='Name of dataset to train model')   # Bernardo
+parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_10000subj', help='Name of dataset to train model')   # Bernardo
 
 
 FLAGS = parser.parse_args()
@@ -88,7 +90,20 @@ DECAY_RATE = FLAGS.decay_rate
 
 MODEL = importlib.import_module(FLAGS.model) # import network module
 MODEL_FILE = os.path.join(ROOT_DIR, '../models', FLAGS.model+'.py')
-LOG_DIR = os.path.dirname(os.path.abspath(__file__)) + '/logs_training/classification/' + FLAGS.log_dir   # Bernardo
+
+if FLAGS.log_dir == '':
+    # classes=5000_backbone=resnet_v2_m_50_epoch-num=100_loss=arcface_s=64.0_m=0.5_moment=0.9_batch=64_lr-init=0.1_20230518-214716
+    FLAGS.log_dir += 'dataset=' + str(FLAGS.dataset)
+    FLAGS.log_dir += '_model=' + str(FLAGS.model)
+    FLAGS.log_dir += '_max_epoch=' + str(FLAGS.max_epoch)
+    FLAGS.log_dir += '_lr-init=' + str(FLAGS.learning_rate)
+    FLAGS.log_dir += '_moment=' + str(FLAGS.momentum)
+    FLAGS.log_dir += '_loss=' + str('arcface')
+    FLAGS.log_dir += '_s=' + str(FLAGS.scale_arc)
+    FLAGS.log_dir += '_m=' + str(FLAGS.margin_arc)
+else:
+    FLAGS.log_dir = 'log_face_recognition'
+LOG_DIR = os.path.dirname(os.path.abspath(__file__)) + '/logs_training/classification/' + FLAGS.log_dir + '_' + datetime.fromtimestamp(time.time()).strftime("%d%m%Y_%H%M%S")   # Bernardo
 
 if not os.path.exists(LOG_DIR): os.makedirs(LOG_DIR)
 os.system('cp %s %s' % (MODEL_FILE, LOG_DIR)) # bkp of model def
@@ -155,7 +170,7 @@ elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_reduced'.upper():
 elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_1000subj'.upper():
     min_samples, max_samples = 2, -1
     # DATA_PATH = os.path.join('/experiments/BOVIFOCR_project/datasets/faces/3D_reconstruction_MICA/output/MS-Celeb-1M/ms1m-retinaface-t1/images_1000subj')
-    DATA_PATH = os.path.join('/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_1000subj')
+    DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_1000subj')
     print('Loading train data...')
     TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
     print('Loading test data...')
@@ -163,7 +178,8 @@ elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_1000subj'.upper():
 
 elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_2000subj'.upper():
     min_samples, max_samples = 2, -1
-    DATA_PATH = os.path.join('/experiments/BOVIFOCR_project/datasets/faces/3D_reconstruction_MICA/output/MS-Celeb-1M/ms1m-retinaface-t1/images_2000subj')
+    # DATA_PATH = os.path.join('/experiments/BOVIFOCR_project/datasets/faces/3D_reconstruction_MICA/output/MS-Celeb-1M/ms1m-retinaface-t1/images_2000subj')
+    DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_2000subj')
     print('Loading train data...')
     TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
     print('Loading test data...')
@@ -171,7 +187,16 @@ elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_2000subj'.upper():
 
 elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_5000subj'.upper():
     min_samples, max_samples = 2, -1
-    DATA_PATH = os.path.join('/experiments/BOVIFOCR_project/datasets/faces/3D_reconstruction_MICA/output/MS-Celeb-1M/ms1m-retinaface-t1/images_5000subj')
+    # DATA_PATH = os.path.join('/experiments/BOVIFOCR_project/datasets/faces/3D_reconstruction_MICA/output/MS-Celeb-1M/ms1m-retinaface-t1/images_5000subj')
+    DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_5000subj')
+    print('Loading train data...')
+    TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    print('Loading test data...')
+    TEST_DATASET  = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+
+elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_10000subj'.upper():
+    min_samples, max_samples = 2, -1
+    DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_10000subj')
     print('Loading train data...')
     TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
     print('Loading test data...')
@@ -333,7 +358,11 @@ def train_one_epoch(sess, ops, train_writer):
     total_seen = 0
     loss_sum = 0
     batch_idx = 0
+    num_batches = TRAIN_DATASET.__len__() / BATCH_SIZE
+
     while TRAIN_DATASET.has_next_batch():
+        print('batch_idx: %d/%d' % (batch_idx, num_batches), end='\r')
+
         # batch_data, batch_label = TRAIN_DATASET.next_batch(augment=True)   # original
         batch_data, batch_label = TRAIN_DATASET.next_batch(augment=False)    # Bernardo
         
@@ -382,11 +411,14 @@ def eval_train_one_epoch(sess, ops, test_writer):
     shape_ious = []
     total_seen_class = [0 for _ in range(NUM_CLASSES)]
     total_correct_class = [0 for _ in range(NUM_CLASSES)]
+    num_batches = TRAIN_DATASET.__len__() / BATCH_SIZE
 
     log_string(str(datetime.now()))
     log_string('---- EPOCH %03d TRAIN EVALUATION ----'%(EPOCH_CNT))
 
     while TRAIN_DATASET.has_next_batch():
+        print('batch_idx: %d/%d' % (batch_idx, num_batches), end='\r')
+
         batch_data, batch_label = TRAIN_DATASET.next_batch(augment=False)
         bsize = batch_data.shape[0]
         # for the last batch in the epoch, the bsize:end are from last batch
@@ -409,6 +441,8 @@ def eval_train_one_epoch(sess, ops, test_writer):
             l = batch_label[i]
             total_seen_class[l] += 1
             total_correct_class[l] += (pred_val[i] == l)
+
+    print('')
     
     train_mean_loss = loss_sum / float(batch_idx)
     train_accuracy = total_correct / float(total_seen)

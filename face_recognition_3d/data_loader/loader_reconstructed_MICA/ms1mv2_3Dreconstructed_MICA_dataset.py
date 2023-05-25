@@ -16,6 +16,7 @@ sys.path.append(os.path.join(ROOT_DIR, '../../../utils'))
 import provider
 import struct
 from plyfile import PlyData
+import pickle
 
 from tree_ms1mv2_3Dreconstructed_MICA import TreeMS1MV2_3DReconstructedMICA
 
@@ -44,7 +45,27 @@ class MS1MV2_3D_Reconstructed_MICA_Dataset():
         file_ext = 'mesh_centralized-nosetip_with-normals_filter-radius=100.npy'
         # file_ext = 'mesh_upsample_MetaPU_upsample_MetaPU_centralized-nosetip_with-normals_filter-radius=100.npy'
         dir_level=2
-        subjects_with_pc_paths, unique_subjects_names, samples_per_subject = TreeMS1MV2_3DReconstructedMICA().load_filter_organize_pointclouds_paths(self.root, dir_level, file_ext, min_samples, max_samples)
+
+        paths_file = root + '/' + 'paths_' + root.split('/')[-1] + '_min-samples=' + str(min_samples) + '_max-samples=' + str(max_samples) +'_file-ext=\'' + str(file_ext) + '\'.pkl'
+
+        if not os.path.isfile(paths_file):
+            subjects_with_pc_paths, unique_subjects_names, samples_per_subject = TreeMS1MV2_3DReconstructedMICA().load_filter_organize_pointclouds_paths(self.root, dir_level, file_ext, min_samples, max_samples)
+
+            paths_dict = {'subjects_with_pc_paths': subjects_with_pc_paths, 'unique_subjects_names': unique_subjects_names, 'samples_per_subject': samples_per_subject}
+            print('Saving paths at:', paths_file)
+            with open(paths_file, 'wb') as fp:
+                pickle.dump(paths_dict, fp)
+                print('Done!')
+        else:
+            with open(paths_file, 'rb') as fp:
+                print('Reading paths from:', paths_file)
+                paths_dict = pickle.load(fp)
+
+                subjects_with_pc_paths = paths_dict['subjects_with_pc_paths']
+                unique_subjects_names = paths_dict['unique_subjects_names']
+                samples_per_subject = paths_dict['samples_per_subject']
+                print('Done!')
+
         assert len(unique_subjects_names) == len(samples_per_subject)
         # for subj_pc_path in subjects_with_pc_paths:
         #     print('subj_pc_path:', subj_pc_path)
