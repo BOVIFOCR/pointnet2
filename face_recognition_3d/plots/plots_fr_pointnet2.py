@@ -96,7 +96,7 @@ def load_original_training_log_pointnet2_angmargin(path_file=''):
                 parameters = line.replace('Namespace', '')
                 # print('parameters:', parameters)
 
-            if line.startswith('---- EPOCH') and line.endswith('TRAIN EVALUATION ----'):
+            if line.startswith('---- EPOCH') and (line.endswith('TRAIN EVALUATION ----') or line.endswith('TRAINING ----')):
                 epoch.append(int(line.split(' ')[2]))
                 if i+2 < len(all_lines) and all_lines[i+2].startswith('train mean loss:'):
                     train_mean_loss.append(float(all_lines[i+2][:-1].split(':')[-1]))
