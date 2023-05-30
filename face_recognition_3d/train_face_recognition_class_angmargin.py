@@ -566,6 +566,10 @@ def plot_classification_training_history():
         title = 'PointNet++ training on MS1MV2_2000subj-Reconst3D-MICA \nClassification (1:N) - '+str(NUM_CLASSES)+' classes - min_samples='+str(min_samples)+' - max_samples='+str(max_samples)
     elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_5000subj'.upper():
         title = 'PointNet++ training on MS1MV2_5000subj-Reconst3D-MICA \nClassification (1:N) - '+str(NUM_CLASSES)+' classes - min_samples='+str(min_samples)+' - max_samples='+str(max_samples)
+    elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_10000subj'.upper():
+        title = 'PointNet++ training on MS1MV2_10000subj-Reconst3D-MICA \nClassification (1:N) - '+str(NUM_CLASSES)+' classes - min_samples='+str(min_samples)+' - max_samples='+str(max_samples)
+    else:
+        title = 'PointNet++ training'
 
 
     subtitle = 'Parameters: ' + plots_fr_pointnet2.break_string(parameters, substring=', ', num_parts=4)
