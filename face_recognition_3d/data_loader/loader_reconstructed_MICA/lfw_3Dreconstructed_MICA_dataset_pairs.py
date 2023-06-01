@@ -13,6 +13,7 @@ import sys
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = BASE_DIR
 sys.path.append(os.path.join(ROOT_DIR, '../../../utils'))
+sys.path.append(BASE_DIR)
 import provider
 import struct
 from plyfile import PlyData
@@ -32,7 +33,7 @@ def pc_normalize(pc):
 
     return pc
 
-class LFR_3D_Reconstructed_MICA_Dataset_Pairs():
+class LFW_3D_Reconstructed_MICA_Dataset_Pairs():
     def __init__(self, root, batch_size = 32, npoints = 2900, split='train', normalize=True, normal_channel=False, modelnet10=False, cache_size=15000, shuffle=None):
         self.root = root
         self.batch_size = batch_size
