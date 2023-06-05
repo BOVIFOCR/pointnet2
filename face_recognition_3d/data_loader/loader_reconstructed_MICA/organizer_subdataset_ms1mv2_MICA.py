@@ -5,6 +5,7 @@ import numpy as np
 import sys
 
 from tree_ms1mv2_3Dreconstructed_MICA import TreeMS1MV2_3DReconstructedMICA
+from tree_webface_3Dreconstructed_MICA import TreeWEBFACE_3DReconstructedMICA
 
 
 
@@ -27,16 +28,17 @@ def make_symbolic_links_folders(src_path='', folders_names=[''], limit_folders=1
 
 
 if __name__ == '__main__':
-    # For RGB images
-    src_path = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/images'    # RGB images
-    dir_level = 1    # for RGB images
-    file_ext = '.png'
+    # # For RGB images
+    # src_path = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/images'    # RGB images
+    # dir_level = 1    # for RGB images
+    # file_ext = '.png'
     
     # For 3D pointclouds
     # src_path = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images'    # Pointclouds
-    # dir_level = 2      # for pointclouds
-    # file_ext = '_centralized-nosetip_with-normals_filter-radius=100.npy'
-    # file_ext = 'mesh.ply'
+    src_path = '/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/WebFace260M_3D_reconstruction_originalMICA/MICA_original'    # Pointclouds
+    dir_level = 2      # for pointclouds
+    file_ext = '_centralized-nosetip_with-normals_filter-radius=100.npy'
+    file_ext = 'mesh.ply'
 
     min_samples, max_samples = 2, -1
 
@@ -50,23 +52,26 @@ if __name__ == '__main__':
 
 
 
-    path_target_symb_links = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/images_1000subj'
+    # path_target_symb_links = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/images_1000subj'
+    path_target_symb_links = '/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/WebFace260M_3D_reconstruction_originalMICA/images_1000subj'  # diolkos
     num_subjects_symb_links = 1000
     print('\nMaking %s symbolic links...' % (num_subjects_symb_links))
     make_symbolic_links_folders(src_path, unique_subjects_names, num_subjects_symb_links, path_target_symb_links)
 
-    path_target_symb_links = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/images_2000subj'
+    # path_target_symb_links = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/images_2000subj'
+    path_target_symb_links = '/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/WebFace260M_3D_reconstruction_originalMICA/images_2000subj'  # diolkos
     num_subjects_symb_links = 2000
     print('\nMaking %s symbolic links...' % (num_subjects_symb_links))
     make_symbolic_links_folders(src_path, unique_subjects_names, num_subjects_symb_links, path_target_symb_links)
 
-    path_target_symb_links = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/images_5000subj'
+    # path_target_symb_links = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/images_5000subj'
+    path_target_symb_links = '/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/WebFace260M_3D_reconstruction_originalMICA/images_5000subj'  # diolkos
     num_subjects_symb_links = 5000
     print('\nMaking %s symbolic links...' % (num_subjects_symb_links))
     make_symbolic_links_folders(src_path, unique_subjects_names, num_subjects_symb_links, path_target_symb_links)
 
-    path_target_symb_links = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/images_10000subj'
-    num_subjects_symb_links = 10000
-    print('\nMaking %s symbolic links...' % (num_subjects_symb_links))
-    make_symbolic_links_folders(src_path, unique_subjects_names, num_subjects_symb_links, path_target_symb_links)
+    # path_target_symb_links = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/images_10000subj'
+    # num_subjects_symb_links = 10000
+    # print('\nMaking %s symbolic links...' % (num_subjects_symb_links))
+    # make_symbolic_links_folders(src_path, unique_subjects_names, num_subjects_symb_links, path_target_symb_links)
 
