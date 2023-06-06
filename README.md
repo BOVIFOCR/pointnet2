@@ -27,7 +27,7 @@ conda env config vars set LD_LIBRARY_PATH="$CUDA_HOME/lib64"; conda deactivate; 
 conda env config vars set PATH="$CUDA_HOME:$CUDA_HOME/bin:$LD_LIBRARY_PATH:$PATH"; conda deactivate; conda activate $ENV_NAME
 
 # INSTALL DEPENDENCIES
-pip install matplotlib h5py opencv-python==4.2.0.32 tensorflow==1.4.0 tensorflow-gpu==1.4.0 pathlib plyfile scipy provider
+pip install matplotlib==2.2.5 h5py==2.10.0 opencv-python==4.2.0.32 tensorflow==1.4.0 tensorflow-gpu==1.4.0 pathlib==1.0.1 plyfile==0.7.4 scipy==1.2.3
 conda install cudatoolkit
 conda install cudnn
 
