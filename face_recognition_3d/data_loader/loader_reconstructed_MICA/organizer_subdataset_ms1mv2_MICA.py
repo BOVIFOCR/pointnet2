@@ -36,12 +36,17 @@ if __name__ == '__main__':
     # For 3D pointclouds
     # src_path = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images'    # Pointclouds (duo)
     # src_path = '/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/WebFace260M_3D_reconstruction_originalMICA/MICA_original'    # Pointclouds (diolkos)
-    src_path = '/nobackup1/bjgbiesseck/datasets/WebFace260M_3D_reconstruction_originalMICA/MICA_original'    # Pointclouds (peixoto)
+    src_path = '/nobackup1/bjgbiesseck/datasets/MS-Celeb-1M_3D_reconstruction_originalMICA/images'             # Pointclouds (peixoto)
+    # src_path = '/nobackup1/bjgbiesseck/datasets/WebFace260M_3D_reconstruction_originalMICA/MICA_original'    # Pointclouds (peixoto)
     dir_level = 2      # for pointclouds
     file_ext = '_centralized-nosetip_with-normals_filter-radius=100.npy'
-    file_ext = 'mesh.ply'
+    # file_ext = 'mesh.ply'
 
     min_samples, max_samples = 2, -1
+
+    # nums_subjects_symb_links = [1000, 2000, 5000]
+    nums_subjects_symb_links = [1000, 2000, 5000, 10000]
+
 
 
     print('Searching all files ending with \'' + file_ext + '\' in \'' + src_path + '\' ...')
@@ -51,31 +56,8 @@ if __name__ == '__main__':
     print('len(samples_per_subject):', len(samples_per_subject))
 
 
-
-
-    # path_target_symb_links = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/images_1000subj'  (duo)
-    # path_target_symb_links = '/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/WebFace260M_3D_reconstruction_originalMICA/images_1000subj'  # (diolkos)
-    path_target_symb_links = '/nobackup1/bjgbiesseck/datasets/WebFace260M_3D_reconstruction_originalMICA/images_1000subj'  # (peixoto)
-    num_subjects_symb_links = 1000
-    print('\nMaking %s symbolic links...' % (num_subjects_symb_links))
-    make_symbolic_links_folders(src_path, unique_subjects_names, num_subjects_symb_links, path_target_symb_links)
-
-    # path_target_symb_links = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/images_2000subj'  (duo)
-    # path_target_symb_links = '/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/WebFace260M_3D_reconstruction_originalMICA/images_2000subj'  # (diolkos)
-    path_target_symb_links = '/nobackup1/bjgbiesseck/datasets/WebFace260M_3D_reconstruction_originalMICA/images_2000subj'  # (peixoto)
-    num_subjects_symb_links = 2000
-    print('\nMaking %s symbolic links...' % (num_subjects_symb_links))
-    make_symbolic_links_folders(src_path, unique_subjects_names, num_subjects_symb_links, path_target_symb_links)
-
-    # path_target_symb_links = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/images_5000subj'  (duo)
-    # path_target_symb_links = '/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/WebFace260M_3D_reconstruction_originalMICA/images_5000subj'  # (diolkos)
-    path_target_symb_links = '/nobackup1/bjgbiesseck/datasets/WebFace260M_3D_reconstruction_originalMICA/images_5000subj'  # (peixoto)
-    num_subjects_symb_links = 5000
-    print('\nMaking %s symbolic links...' % (num_subjects_symb_links))
-    make_symbolic_links_folders(src_path, unique_subjects_names, num_subjects_symb_links, path_target_symb_links)
-
-    # path_target_symb_links = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/images_10000subj'  (duo)
-    # num_subjects_symb_links = 10000
-    # print('\nMaking %s symbolic links...' % (num_subjects_symb_links))
-    # make_symbolic_links_folders(src_path, unique_subjects_names, num_subjects_symb_links, path_target_symb_links)
+    for num_subjects in nums_subjects_symb_links:
+        path_target_symb_links = '/'.join(src_path.split('/')[:-1]) + '/images_' + str(num_subjects) + 'subj'
+        print('\nMaking %s symbolic links...' % (num_subjects))
+        make_symbolic_links_folders(src_path, unique_subjects_names, num_subjects, path_target_symb_links)
 
