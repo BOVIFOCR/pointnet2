@@ -71,8 +71,8 @@ parser.add_argument('--normal', type=bool, default=False, help='Whether to use n
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_1000subj', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_2000subj', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_5000subj', help='Name of dataset to train model')   # Bernardo
-# parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_10000subj', help='Name of dataset to train model')   # Bernardo
-parser.add_argument('--dataset', type=str, default='reconst_mica_webface_1000subj', help='Name of dataset to train model')   # Bernardo
+parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_10000subj', help='Name of dataset to train model')   # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_mica_webface_1000subj', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_webface_2000subj', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_webface_5000subj', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_webface_10000subj', help='Name of dataset to train model')   # Bernardo
@@ -201,7 +201,8 @@ elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_5000subj'.upper():
 
 elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_10000subj'.upper():
     min_samples, max_samples = 2, -1
-    DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_10000subj')
+    # DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_10000subj')
+    DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/MS-Celeb-1M_3D_reconstruction_originalMICA/images_10000subj')
     print('Loading train data...')
     TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
     print('Loading test data...')
@@ -591,18 +592,8 @@ def plot_classification_training_history():
         title = 'PointNet++ training on SyntheticFaces \nClassification (1:N) - '+str(NUM_CLASSES)+' classes - '+str(n_expressions)+' expressions'
     elif FLAGS.dataset.upper() == 'reconst_mica_lfw'.upper():
         title = 'PointNet++ training on LFW-Reconst3D-MICA \nClassification (1:N) - '+str(NUM_CLASSES)+' classes - min_samples='+str(min_samples)+' - max_samples='+str(max_samples)
-    elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2'.upper():
-        title = 'PointNet++ training on MS1MV2-Reconst3D-MICA \nClassification (1:N) - '+str(NUM_CLASSES)+' classes - min_samples='+str(min_samples)+' - max_samples='+str(max_samples)
-    elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_reduced'.upper():
-        title = 'PointNet++ training on MS1MV2_reduced-Reconst3D-MICA \nClassification (1:N) - '+str(NUM_CLASSES)+' classes - min_samples='+str(min_samples)+' - max_samples='+str(max_samples)
-    elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_1000subj'.upper():
-        title = 'PointNet++ training on MS1MV2_1000subj-Reconst3D-MICA \nClassification (1:N) - '+str(NUM_CLASSES)+' classes - min_samples='+str(min_samples)+' - max_samples='+str(max_samples)
-    elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_2000subj'.upper():
-        title = 'PointNet++ training on MS1MV2_2000subj-Reconst3D-MICA \nClassification (1:N) - '+str(NUM_CLASSES)+' classes - min_samples='+str(min_samples)+' - max_samples='+str(max_samples)
-    elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_5000subj'.upper():
-        title = 'PointNet++ training on MS1MV2_5000subj-Reconst3D-MICA \nClassification (1:N) - '+str(NUM_CLASSES)+' classes - min_samples='+str(min_samples)+' - max_samples='+str(max_samples)
-    elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_10000subj'.upper():
-        title = 'PointNet++ training on MS1MV2_10000subj-Reconst3D-MICA \nClassification (1:N) - '+str(NUM_CLASSES)+' classes - min_samples='+str(min_samples)+' - max_samples='+str(max_samples)
+    elif FLAGS.dataset.upper().startswith('reconst_mica_ms1mv2'.upper()):
+        title = 'PointNet++ training on ' + FLAGS.dataset.upper() + ' \nClassification (1:N) - '+str(NUM_CLASSES)+' classes - min_samples='+str(min_samples)+' - max_samples='+str(max_samples)
     elif FLAGS.dataset.upper().startswith('reconst_mica_webface'.upper()):
         title = 'PointNet++ training on ' + FLAGS.dataset.upper() + ' \nClassification (1:N) - '+str(NUM_CLASSES)+' classes - min_samples='+str(min_samples)+' - max_samples='+str(max_samples)
     else:
