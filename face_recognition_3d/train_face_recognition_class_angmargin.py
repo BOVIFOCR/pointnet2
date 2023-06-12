@@ -175,7 +175,8 @@ elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_reduced'.upper():
 elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_1000subj'.upper():
     min_samples, max_samples = 2, -1
     # DATA_PATH = os.path.join('/experiments/BOVIFOCR_project/datasets/faces/3D_reconstruction_MICA/output/MS-Celeb-1M/ms1m-retinaface-t1/images_1000subj')
-    DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_1000subj')
+    # DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_1000subj')
+    DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/MS-Celeb-1M_3D_reconstruction_originalMICA/images_1000subj')  # peixoto
     print('Loading train data...')
     TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
     print('Loading test data...')
@@ -184,7 +185,8 @@ elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_1000subj'.upper():
 elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_2000subj'.upper():
     min_samples, max_samples = 2, -1
     # DATA_PATH = os.path.join('/experiments/BOVIFOCR_project/datasets/faces/3D_reconstruction_MICA/output/MS-Celeb-1M/ms1m-retinaface-t1/images_2000subj')
-    DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_2000subj')
+    # DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_2000subj')
+    DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/MS-Celeb-1M_3D_reconstruction_originalMICA/images_2000subj')  # peixoto
     print('Loading train data...')
     TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
     print('Loading test data...')
@@ -193,7 +195,8 @@ elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_2000subj'.upper():
 elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_5000subj'.upper():
     min_samples, max_samples = 2, -1
     # DATA_PATH = os.path.join('/experiments/BOVIFOCR_project/datasets/faces/3D_reconstruction_MICA/output/MS-Celeb-1M/ms1m-retinaface-t1/images_5000subj')
-    DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_5000subj')
+    # DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_5000subj')
+    DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/MS-Celeb-1M_3D_reconstruction_originalMICA/images_5000subj')  # peixoto
     print('Loading train data...')
     TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
     print('Loading test data...')
@@ -202,7 +205,7 @@ elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_5000subj'.upper():
 elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_10000subj'.upper():
     min_samples, max_samples = 2, -1
     # DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_10000subj')
-    DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/MS-Celeb-1M_3D_reconstruction_originalMICA/images_10000subj')
+    DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/MS-Celeb-1M_3D_reconstruction_originalMICA/images_10000subj')  # peixoto
     print('Loading train data...')
     TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
     print('Loading test data...')

@@ -85,7 +85,8 @@ HOSTNAME = socket.gethostname()
 
 if FLAGS.dataset.upper() == 'reconst_mica_lfw'.upper():
     # DATA_PATH = os.path.join(ROOT_DIR, '../../BOVIFOCR_MICA_3Dreconstruction/demo/output/lfw')
-    DATA_PATH = os.path.join(ROOT_DIR, '/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/lfw')
+    # DATA_PATH = os.path.join(ROOT_DIR, '/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/lfw')
+    DATA_PATH = os.path.join(ROOT_DIR, '/nobackup1/bjgbiesseck/datasets/MICA_3Dreconstruction/lfw')
     EVAL_DATASET = lfw_evaluation_3Dreconstructed_MICA_dataset_pairs.LFW_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
     
 elif FLAGS.dataset.upper() == 'reconst_mica_calfw'.upper():
