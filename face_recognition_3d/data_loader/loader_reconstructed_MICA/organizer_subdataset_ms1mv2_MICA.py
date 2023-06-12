@@ -35,9 +35,9 @@ if __name__ == '__main__':
     
     # For 3D pointclouds
     # src_path = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images'    # Pointclouds (duo)
-    # src_path = '/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/WebFace260M_3D_reconstruction_originalMICA/MICA_original'    # Pointclouds (diolkos)
+    src_path = '/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/WebFace260M_3D_reconstruction_originalMICA/MICA_original'    # Pointclouds (diolkos)
     # src_path = '/nobackup1/bjgbiesseck/datasets/MS-Celeb-1M_3D_reconstruction_originalMICA/images'             # Pointclouds (peixoto)
-    src_path = '/nobackup1/bjgbiesseck/datasets/WebFace260M_3D_reconstruction_originalMICA/MICA_original'    # Pointclouds (peixoto)
+    # src_path = '/nobackup1/bjgbiesseck/datasets/WebFace260M_3D_reconstruction_originalMICA/MICA_original'      # Pointclouds (peixoto)
     dir_level = 2      # for pointclouds
     file_ext = '_centralized-nosetip_with-normals_filter-radius=100.npy'
     # file_ext = 'mesh.ply'
@@ -54,7 +54,6 @@ if __name__ == '__main__':
 
     print('len(unique_subjects_names):', len(unique_subjects_names))
     print('len(samples_per_subject):', len(samples_per_subject))
-
 
     for num_subjects in nums_subjects_symb_links:
         path_target_symb_links = '/'.join(src_path.split('/')[:-1]) + '/images_' + str(num_subjects) + 'subj'

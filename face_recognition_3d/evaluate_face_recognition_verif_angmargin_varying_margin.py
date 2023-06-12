@@ -38,7 +38,12 @@ parser.add_argument('--num_point', type=int, default=2900, help='Point Number [d
 # parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-2000subj_batch=16_margin=0.0/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 # parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-5000subj_batch=16_margin=0.0/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 # parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-1000subj_batch=16_margin=0.0_classification-layer=1/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
-parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_ms1mv2_10000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=32_m=0.0_26052023_222414/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
+# parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_ms1mv2_10000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=32_m=0.0_26052023_222414/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
+# parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_webface_1000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=16_m=0.0_05062023_194932/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
+# parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_webface_1000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=1e-05_moment=0.9_loss=arcface_s=32_m=0.0_05062023_170747/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
+# parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_webface_2000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=16_m=0.0_05062023_213735/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
+parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_webface_5000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=1e-05_moment=0.9_loss=arcface_s=32_m=0.0_07062023_142326/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
+# parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_webface_5000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=32_m=0.0_06062023_235151/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 
 
 parser.add_argument('--dump_dir', default='dump', help='dump folder path [dump]')
@@ -57,19 +62,9 @@ FLAGS = parser.parse_args()
 
 
 # NUM_CLASSES = 1000
-# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/lfw_distances_arcface=1000class_acc=0.93833.npy'
-# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/calfw_distances_arcface=1000class_acc=0.82333.npy'
-
 # NUM_CLASSES = 2000
-# # ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/lfw_distances_arcface=2000class_acc=0.96333.npy'
-# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/calfw_distances_arcface=2000class_acc=0.86750.npy'
-
-# NUM_CLASSES = 5000
-# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/lfw_distances_arcface=5000class_acc=0.97550.npy'
-# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/calfw_distances_arcface=5000class_acc=0.87900.npy'
-
-NUM_CLASSES = 10000
-# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/lfw_distances_arcface=10000class_acc=0.98583.npy'
+NUM_CLASSES = 5000
+# NUM_CLASSES = 10000
 
 
 
