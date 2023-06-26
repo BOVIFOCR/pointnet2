@@ -12,6 +12,9 @@ import importlib
 import time
 import os
 import scipy.misc
+from scipy import interpolate
+from sklearn.model_selection import KFold
+from sklearn.preprocessing import normalize
 import sys
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = BASE_DIR
@@ -38,11 +41,14 @@ parser.add_argument('--num_point', type=int, default=2900, help='Point Number [d
 # parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-2000subj_batch=16_margin=0.0/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 # parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-5000subj_batch=16_margin=0.0/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 # parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-1000subj_batch=16_margin=0.0_classification-layer=1/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
-# parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_ms1mv2_10000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=32_m=0.0_26052023_222414/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
-# parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_webface_1000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=1e-05_moment=0.9_loss=arcface_s=32_m=0.0_05062023_170747/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
-# parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_webface_1000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=16_m=0.0_05062023_194932/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
-# parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_webface_2000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=16_m=0.0_05062023_213735/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
-parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_webface_5000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=1e-05_moment=0.9_loss=arcface_s=32_m=0.0_07062023_142326/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
+parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_ms1mv2_1000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=32_m=0.0_06052023_114705/model_best_train_accuracy.ckpt', help='model checkpoint file path')      # Bernardo
+# parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_ms1mv2_2000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=32_m=0.0_09062023_184940/model_best_train_accuracy.ckpt', help='model checkpoint file path')    # Bernardo
+# parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_ms1mv2_5000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-06_moment=0.9_loss=arcface_s=32_m=0.0_12062023_154451/model_best_train_accuracy.ckpt', help='model checkpoint file path')    # Bernardo
+# parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_ms1mv2_10000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=32_m=0.0_26052023_222414/model_best_train_accuracy.ckpt', help='model checkpoint file path')   # Bernardo
+# parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_webface_1000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=16_m=0.0_05062023_194932/model_best_train_accuracy.ckpt', help='model checkpoint file path')   # Bernardo
+# parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_webface_2000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=16_m=0.0_05062023_213735/model_best_train_accuracy.ckpt', help='model checkpoint file path')   # Bernardo
+# parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_webface_5000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=32_m=0.0_06062023_235151/model_best_train_accuracy.ckpt', help='model checkpoint file path')   # Bernardo
+# parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_webface_10000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-06_moment=0.9_loss=arcface_s=32_m=0.0_13062023_123431/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 
 
 parser.add_argument('--dump_dir', default='dump', help='dump folder path [dump]')
@@ -60,24 +66,21 @@ parser.add_argument('--dataset', type=str, default='reconst_mica_lfw', help='Nam
 FLAGS = parser.parse_args()
 
 
-# NUM_CLASSES = 1000
-# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/lfw_distances_arcface=1000class_acc=0.93833.npy'
-# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/calfw_distances_arcface=1000class_acc=0.82333.npy'
+NUM_CLASSES = 1000
+ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=MS1MV3_1000subj_classes=1000_backbone=resnet-v2-m-50_epoch-num=100_margin=0.5_scale=64.0_lr=0.01_wd=0.0005_momentum=0.9_20230518-004011/lfw_distances_arcface=1000class_acc=0.94650.npy'
 # ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=WebFace260M_1000subj_classes=1000_backbone=resnet_v2_m_50_epoch-num=100_loss=arcface_s=64.0_m=0.5_moment=0.9_batch=64_lr-init=0.01_20230524-142404/lfw_distances_arcface=1000class_acc=0.90117.npy'
 
 # NUM_CLASSES = 2000
-# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/lfw_distances_arcface=2000class_acc=0.96333.npy'
-# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/calfw_distances_arcface=2000class_acc=0.86750.npy'
+# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=MS1MV3_2000subj_classes=2000_backbone=resnet-v2-m-50_epoch-num=100_margin=0.5_scale=64.0_lr=0.01_wd=0.0005_momentum=0.9_20230518-010456/lfw_distances_arcface=2000class_acc=0.96617.npy'
 # ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=WebFace260M_2000subj_classes=2000_backbone=resnet_v2_m_50_epoch-num=100_loss=arcface_s=64.0_m=0.5_moment=0.9_batch=64_lr-init=0.01_20230524-190517/lfw_distances_arcface=2000class_acc=0.94350.npy'
 
-NUM_CLASSES = 5000
-# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/lfw_distances_arcface=5000class_acc=0.97550.npy'
-# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/input/MS-Celeb-1M/faces_emore/calfw_distances_arcface=5000class_acc=0.87900.npy'
-ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=WebFace260M_5000subj_classes=5000_backbone=resnet_v2_m_50_epoch-num=150_loss=arcface_s=64.0_m=0.5_moment=0.9_batch=64_lr-init=0.01_20230525-093855/lfw_distances_arcface=5000class_acc=0.96467.npy'
+# NUM_CLASSES = 5000
+# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=MS1MV3_classes=5000_backbone=resnet_v2_m_50_epoch-num=100_loss=arcface_s=64.0_m=0.5_moment=0.9_batch=64_lr-init=0.1_20230518-214716/lfw_distances_arcface=5000class_acc=0.98417.npy'
+# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=WebFace260M_5000subj_classes=5000_backbone=resnet_v2_m_50_epoch-num=150_loss=arcface_s=64.0_m=0.5_moment=0.9_batch=64_lr-init=0.01_20230525-093855/lfw_distances_arcface=5000class_acc=0.96467.npy'
 
 # NUM_CLASSES = 10000
-# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/datasets/MS-Celeb-1M/ms1m-retinaface-t1/lfw_distances_arcface=10000class_acc=0.98583.npy'
-
+# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=MS1MV3_classes=10000_backbone=resnet_v2_m_50_epoch-num=200_loss=arcface_s=64.0_m=0.5_moment=0.9_batch=64_lr-init=0.005_20230522-100202/lfw_distances_arcface=10000class_acc=0.98583.npy'
+# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=WebFace260M_10000subj_classes=10000_backbone=resnet_v2_m_50_epoch-num=150_loss=arcface_s=64.0_m=0.5_moment=0.9_batch=64_lr-init=0.01_20230526-101421/lfw_distances_arcface=10000class_acc=0.98333.npy'
 
 
 BATCH_SIZE = FLAGS.batch_size
@@ -96,15 +99,28 @@ HOSTNAME = socket.gethostname()
 
 
 if FLAGS.dataset.upper() == 'reconst_mica_lfw'.upper():
-    # DATA_PATH = os.path.join(ROOT_DIR, '../../BOVIFOCR_MICA_3Dreconstruction/demo/output/lfw')
-    # DATA_PATH = os.path.join(ROOT_DIR, '/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/lfw')
-    DATA_PATH = os.path.join(ROOT_DIR, '/nobackup1/bjgbiesseck/datasets/MICA_3Dreconstruction/lfw')
+    DATA_PATH = os.path.join(ROOT_DIR, '../../BOVIFOCR_MICA_3Dreconstruction/demo/output/lfw')                    # duo
+    # DATA_PATH = os.path.join(ROOT_DIR, '/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/lfw')   # diolkos
+    # DATA_PATH = os.path.join(ROOT_DIR, '/nobackup1/bjgbiesseck/datasets/MICA_3Dreconstruction/lfw')             # peixoto
     EVAL_DATASET = lfw_evaluation_3Dreconstructed_MICA_dataset_pairs.LFW_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
     
 elif FLAGS.dataset.upper() == 'reconst_mica_calfw'.upper():
     DATA_PATH = os.path.join(ROOT_DIR, '../../BOVIFOCR_MICA_3Dreconstruction/demo/output/calfw')
     EVAL_DATASET = calfw_evaluation_3Dreconstructed_MICA_dataset_pairs.CALFW_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
+
+
+class LFold:
+    def __init__(self, n_splits=2, shuffle=False):
+        self.n_splits = n_splits
+        if self.n_splits > 1:
+            self.k_fold = KFold(n_splits=n_splits, shuffle=shuffle)
+
+    def split(self, indices):
+        if self.n_splits > 1:
+            return self.k_fold.split(indices)
+        else:
+            return [(indices, indices)]
 
 
 def log_string(out_str):
@@ -121,6 +137,26 @@ def save_metric_to_text_file(path_file, all_margins_eval, all_tp_eval, all_fp_ev
             f.write(str(margin) + ',' + str(tp) + ',' + str(fp) + ',' + str(tn) + ',' + str(fn) + ',' + str(acc) + ',' + str(far) + ',' + str(tar) + '\n')
             f.flush()
 
+
+def cosine_distance(embds0, embds1):
+    cos_dist = np.zeros(embds0.shape[0], dtype=np.float32)
+    for i in range(cos_dist.shape[0]):
+        cos_dist[i] = 1 - np.dot(embds0[i], embds1[i])/(np.linalg.norm(embds0[i])*np.linalg.norm(embds1[i]))
+    return cos_dist
+
+
+def compute_embeddings_distance_insightface(face_embedd0, face_embedd1):
+    # assert face_embedd.size()[0] % 2 == 0
+    distances = np.zeros(int(face_embedd0.shape[0]))
+    for i in range(0, face_embedd0.shape[0], 1):
+        embedd0, embedd1 = face_embedd0[i], face_embedd1[i]
+        distances[int(i/2)] = np.sum( np.square( normalize(embedd0.reshape(1, -1), axis=0) - normalize(embedd1.reshape(1, -1), axis=0) ) )
+    # if verbose:
+    #     print('distances:', distances)
+    #     print('distances.size():', distances.size())
+    return distances
+
+
 # Bernardo
 def compute_all_embeddings_and_distances_pointnet2(sess, ops):
     is_training = False
@@ -129,6 +165,7 @@ def compute_all_embeddings_and_distances_pointnet2(sess, ops):
     cur_batch_label = np.zeros((BATCH_SIZE), dtype=np.int32)
 
     all_distances = np.zeros((0), dtype=np.float32)
+    all_pairs_labels = np.zeros((0), dtype=np.int32)
     print('all_distances.shape:', all_distances.shape, end='\r')
     
     while EVAL_DATASET.has_next_batch():
@@ -162,11 +199,12 @@ def compute_all_embeddings_and_distances_pointnet2(sess, ops):
         distances = distances[0:bsize]
 
         all_distances = np.append(all_distances, distances, axis=0)
+        all_pairs_labels = np.append(all_pairs_labels, cur_batch_label[0:bsize], axis=0)
         print('all_distances.shape:', all_distances.shape, end='\r')
     print()
 
     EVAL_DATASET.reset()
-    return all_distances
+    return all_distances, all_pairs_labels
 
 
 def fuse_scores(distances1, distances2):
@@ -174,6 +212,233 @@ def fuse_scores(distances1, distances2):
     distances2 /= np.max(distances2)
     final_distances = (distances1 + distances2) / 2
     return final_distances
+
+
+def get_tp_fp_tn_fn_pairs_indexes(predict_issame, actual_issame):
+    tp_idx = np.logical_and(predict_issame, actual_issame)
+    fp_idx = np.logical_and(predict_issame, np.logical_not(actual_issame))
+    tn_idx = np.logical_and(np.logical_not(predict_issame), np.logical_not(actual_issame))
+    fn_idx = np.logical_and(np.logical_not(predict_issame), actual_issame)
+
+    tp_idx = np.where(tp_idx == True)[0]
+    fp_idx = np.where(fp_idx == True)[0]
+    tn_idx = np.where(tn_idx == True)[0]
+    fn_idx = np.where(fn_idx == True)[0]
+
+    return tp_idx, fp_idx, tn_idx, fn_idx
+
+
+def get_true_accept_false_accept_pairs_indexes(predict_issame, actual_issame):
+    ta_idx = np.logical_and(predict_issame, actual_issame)
+    fa_idx = np.logical_and(predict_issame, np.logical_not(actual_issame))
+
+    ta_idx = np.where(ta_idx == True)[0]
+    fa_idx = np.where(fa_idx == True)[0]
+
+    return ta_idx, fa_idx
+
+
+def calculate_accuracy_tp_fp_tn_fn_pairs_indexes(threshold, dist, actual_issame):
+    predict_issame = np.less(dist, threshold)
+
+    tp = np.sum(np.logical_and(predict_issame, actual_issame))
+    fp = np.sum(np.logical_and(predict_issame, np.logical_not(actual_issame)))
+    tn = np.sum(np.logical_and(np.logical_not(predict_issame), np.logical_not(actual_issame)))
+    fn = np.sum(np.logical_and(np.logical_not(predict_issame), actual_issame))
+
+    tp_idx, fp_idx, tn_idx, fn_idx = get_tp_fp_tn_fn_pairs_indexes(predict_issame, actual_issame)
+
+    tpr = 0 if (tp + fn == 0) else float(tp) / float(tp + fn)
+    fpr = 0 if (fp + tn == 0) else float(fp) / float(fp + tn)
+
+    # acc = float(tp + tn) / dist.size
+    acc = float(tp + tn) / actual_issame.size
+    return tpr, fpr, acc, tp_idx, fp_idx, tn_idx, fn_idx
+
+
+def calculate_accuracy(threshold, dist, actual_issame):
+    predict_issame = np.less(dist, threshold)
+    tp = np.sum(np.logical_and(predict_issame, actual_issame))
+    fp = np.sum(np.logical_and(predict_issame, np.logical_not(actual_issame)))
+    tn = np.sum(
+        np.logical_and(np.logical_not(predict_issame),
+                    np.logical_not(actual_issame)))
+    fn = np.sum(np.logical_and(np.logical_not(predict_issame), actual_issame))
+
+    tpr = 0 if (tp + fn == 0) else float(tp) / float(tp + fn)
+    fpr = 0 if (fp + tn == 0) else float(fp) / float(fp + tn)
+    acc = float(tp + tn) / dist.size
+    return tpr, fpr, acc
+
+
+def calculate_roc(thresholds, dist, actual_issame, nrof_folds=10, verbose=True):
+    # assert (embeddings1.shape[0] == embeddings2.shape[0])
+    # assert (embeddings1.shape[1] == embeddings2.shape[1])
+    assert (dist.shape[0] == actual_issame.shape[0])   # Bernardo
+    nrof_pairs = min(len(actual_issame), dist.shape[0])
+    nrof_thresholds = len(thresholds)
+    k_fold = LFold(n_splits=nrof_folds, shuffle=False)
+
+    tprs = np.zeros((nrof_folds, nrof_thresholds))
+    fprs = np.zeros((nrof_folds, nrof_thresholds))
+    accuracy = np.zeros((nrof_folds))
+    indices = np.arange(nrof_pairs)
+
+    tp_idx = [None] * nrof_folds
+    fp_idx = [None] * nrof_folds
+    tn_idx = [None] * nrof_folds
+    fn_idx = [None] * nrof_folds
+
+    for fold_idx, (train_set, test_set) in enumerate(k_fold.split(indices)):
+        if verbose:
+            # print(f'calculate_roc - fold_idx: {fold_idx}/{nrof_folds-1}', end='\r')
+            print('calculate_roc - fold_idx: '+str(fold_idx)+'/'+str(nrof_folds-1), end='\r')
+
+        # Find the best threshold for the fold
+        acc_train = np.zeros((nrof_thresholds))
+        for threshold_idx, threshold in enumerate(thresholds):            
+            _, _, acc_train[threshold_idx] = calculate_accuracy(
+                threshold, dist[train_set], actual_issame[train_set])
+        best_threshold_index = np.argmax(acc_train)
+        for threshold_idx, threshold in enumerate(thresholds):
+            tprs[fold_idx, threshold_idx], fprs[fold_idx, threshold_idx], _ = calculate_accuracy(
+                threshold, dist[test_set],
+                actual_issame[test_set])
+
+        # original
+        # _, _, accuracy[fold_idx] = self.calculate_accuracy(
+        #     thresholds[best_threshold_index], dist[test_set],
+        #     actual_issame[test_set])
+
+        # Bernardo
+        _, _, accuracy[fold_idx], tp_idx[fold_idx], fp_idx[fold_idx], tn_idx[fold_idx], fn_idx[fold_idx] = calculate_accuracy_tp_fp_tn_fn_pairs_indexes(
+            thresholds[best_threshold_index], dist[test_set],
+            actual_issame[test_set])
+
+        tp_idx[fold_idx] = test_set[tp_idx[fold_idx]]
+        fp_idx[fold_idx] = test_set[fp_idx[fold_idx]]
+        tn_idx[fold_idx] = test_set[tn_idx[fold_idx]]
+        fn_idx[fold_idx] = test_set[fn_idx[fold_idx]]
+
+    tp_idx = np.concatenate(tp_idx)
+    fp_idx = np.concatenate(fp_idx)
+    tn_idx = np.concatenate(tn_idx)
+    fn_idx = np.concatenate(fn_idx)
+
+    if verbose:
+        print('')
+
+    tpr = np.mean(tprs, 0)
+    fpr = np.mean(fprs, 0)
+    # return tpr, fpr, accuracy
+    return tpr, fpr, accuracy, tp_idx, fp_idx, tn_idx, fn_idx
+
+
+def calculate_tar_far(threshold, dist, actual_issame):
+    predict_issame = np.less(dist, threshold)
+    true_accept = np.sum(np.logical_and(predict_issame, actual_issame))
+    false_accept = np.sum(
+        np.logical_and(predict_issame, np.logical_not(actual_issame)))
+    n_same = np.sum(actual_issame)
+    n_diff = np.sum(np.logical_not(actual_issame))
+    tar = float(true_accept) / float(n_same)
+    far = float(false_accept) / float(n_diff)
+    return tar, far
+
+
+def calculate_tar_far_tp_fp_tn_fn_pairs_indexes(threshold, dist, actual_issame):
+    predict_issame = np.less(dist, threshold)
+
+    true_accept = np.sum(np.logical_and(predict_issame, actual_issame))
+    false_accept = np.sum(np.logical_and(predict_issame, np.logical_not(actual_issame)))
+    n_same = np.sum(actual_issame)
+    n_diff = np.sum(np.logical_not(actual_issame))
+
+    ta_idx, fa_idx = get_true_accept_false_accept_pairs_indexes(predict_issame, actual_issame)
+
+    tar = float(true_accept) / float(n_same)
+    far = float(false_accept) / float(n_diff)
+    return tar, far, ta_idx, fa_idx
+
+
+def calculate_tar(thresholds, dist, actual_issame, far_target, nrof_folds=10, verbose=True):
+    # assert (embeddings1.shape[0] == embeddings2.shape[0])
+    # assert (embeddings1.shape[1] == embeddings2.shape[1])
+    nrof_pairs = min(len(actual_issame), dist.shape[0])
+    nrof_thresholds = len(thresholds)
+    k_fold = LFold(n_splits=nrof_folds, shuffle=False)
+
+    tar = np.zeros(nrof_folds)
+    far = np.zeros(nrof_folds)
+
+    # diff = np.subtract(embeddings1, embeddings2)
+    # dist = np.sum(np.square(diff), 1)
+    indices = np.arange(nrof_pairs)
+
+    ta_idx = [None] * nrof_folds
+    fa_idx = [None] * nrof_folds
+
+    for fold_idx, (train_set, test_set) in enumerate(k_fold.split(indices)):
+        if verbose:
+            # print(f'calculate_tar - fold_idx: {fold_idx}/{nrof_folds-1}', end='\r')
+            print('calculate_tar - fold_idx: '+str(fold_idx)+'/'+str(nrof_folds-1), end='\r')
+
+        # Find the threshold that gives FAR = far_target
+        far_train = np.zeros(nrof_thresholds)
+        for threshold_idx, threshold in enumerate(thresholds):
+            _, far_train[threshold_idx] = calculate_tar_far(
+                threshold, dist[train_set], actual_issame[train_set])
+        if np.max(far_train) >= far_target:
+            f = interpolate.interp1d(far_train, thresholds, kind='slinear')
+            threshold = f(far_target)
+        else:
+            threshold = 0.0
+
+        # original
+        # tar[fold_idx], far[fold_idx] = self.calculate_tar_far(
+        #     threshold, dist[test_set], actual_issame[test_set])
+
+        # Bernardo
+        tar[fold_idx], far[fold_idx], ta_idx[fold_idx], fa_idx[fold_idx] = calculate_tar_far_tp_fp_tn_fn_pairs_indexes(
+            threshold, dist[test_set], actual_issame[test_set])
+
+        ta_idx[fold_idx] = test_set[ta_idx[fold_idx]]
+        fa_idx[fold_idx] = test_set[fa_idx[fold_idx]]
+
+    ta_idx = np.concatenate(ta_idx)
+    fa_idx = np.concatenate(fa_idx)
+
+    if verbose:
+        print('')
+
+    tar_mean = np.mean(tar)
+    far_mean = np.mean(far)
+    tar_std = np.std(tar)
+    # return tar_mean, tar_std, far_mean
+    return tar_mean, tar_std, far_mean, ta_idx, fa_idx
+
+
+def do_k_fold_test(folds_pair_distances, folds_pair_labels, verbose=True):
+    thresholds = np.arange(0, 4, 0.01)
+    # tpr, fpr, accuracy = self.calculate_roc(thresholds, folds_pair_distances, folds_pair_labels, nrof_folds=10, verbose=verbose)
+    tpr, fpr, accuracy, tp_idx, fp_idx, tn_idx, fn_idx = calculate_roc(thresholds, folds_pair_distances, folds_pair_labels, nrof_folds=10, verbose=verbose)
+    # print('tp_idx.shape:', tp_idx.shape)
+    # print('fp_idx.shape:', fp_idx.shape)
+    # print('tn_idx.shape:', tn_idx.shape)
+    # print('fn_idx.shape:', fn_idx.shape)
+
+    thresholds = np.arange(0, 4, 0.001)
+    # tar_mean, tar_std, far_mean = self.calculate_tar(thresholds, folds_pair_distances, folds_pair_labels, far_target=1e-3, nrof_folds=10, verbose=verbose)
+    tar_mean, tar_std, far_mean, ta_idx, fa_idx = calculate_tar(thresholds, folds_pair_distances, folds_pair_labels, far_target=1e-3, nrof_folds=10, verbose=verbose)
+    # print('ta_idx.shape:', ta_idx.shape)
+    # print('fa_idx.shape:', fa_idx.shape)
+
+    if verbose:
+        print('------------')
+
+    # return tpr, fpr, accuracy, tar_mean, tar_std, far_mean
+    return tpr, fpr, accuracy, tar_mean, tar_std, far_mean, \
+        tp_idx, fp_idx, tn_idx, fn_idx, ta_idx, fa_idx
 
 
 # Bernardo
@@ -218,7 +483,7 @@ def evaluate_varying_margin(num_votes):
 
 
     print('PointNet++ (3D) - Computing all embeddings and distances...')
-    all_distances_pointnet2 = compute_all_embeddings_and_distances_pointnet2(sess, ops)
+    all_distances_pointnet2, pairs_labels = compute_all_embeddings_and_distances_pointnet2(sess, ops)
 
     print('ArcFace (2D) - Loading distances from file: ')
     all_distances_arcface = np.load(ARCFACE_DISTANCES_FILE)
@@ -227,88 +492,14 @@ def evaluate_varying_margin(num_votes):
     final_distances = fuse_scores(all_distances_arcface, all_distances_pointnet2)
     print('final_distances.shape:', final_distances.shape)
 
-    min_margin, max_margin, step_margin = 0, 1, 0.005
-    # min_margin, max_margin, step_margin = 0, 1, 0.01
-    # min_margin, max_margin, step_margin = 0, 1, 0.05
 
-    all_margins_eval = np.arange(min_margin, max_margin+step_margin, step_margin, dtype=np.float32)
-    
-    all_tp_eval = np.zeros_like(all_margins_eval)
-    all_fp_eval = np.zeros_like(all_margins_eval)
-    all_tn_eval = np.zeros_like(all_margins_eval)
-    all_fn_eval = np.zeros_like(all_margins_eval)
-    all_acc_eval = np.zeros_like(all_margins_eval)
-    all_far_eval = np.zeros_like(all_margins_eval)
-    all_tar_eval = np.zeros_like(all_margins_eval)
+    tpr, fpr, accuracy, tar_mean, tar_std, far_mean, \
+            tp_idx, fp_idx, tn_idx, fn_idx, ta_idx, fa_idx = do_k_fold_test(final_distances, pairs_labels, verbose=True)
+    acc_mean, acc_std = np.mean(accuracy), np.std(accuracy)
 
-    for i, margin in enumerate(all_margins_eval):
-        print(str(i) + '/' + str(len(all_margins_eval)-1) + ' - Evaluating dataset \'' + FLAGS.dataset + '\', margin=' + str(margin) + ' ...')
-        tp, tn, fp, fn, acc, far, tar = eval_one_epoch(final_distances, margin)
-        all_tp_eval[i] = tp
-        all_tn_eval[i] = tn
-        all_fp_eval[i] = fp
-        all_fn_eval[i] = fn
-        all_acc_eval[i] = acc
-        all_far_eval[i] = far
-        all_tar_eval[i] = tar
-        print('    margin: %1.5f    tp: %d    tn: %d    fp: %d    fn: %d    acc: %1.5f    far: %1.5f    tar: %1.5f' % (margin, tp, tn, fp, fn, acc, far, tar))
-        print('-------------------------')
-    
-    # print('Evaluation of dataset \'' + FLAGS.dataset + '\'')
-    # for i, margin in enumerate(all_margins_eval):
-    #     print('margin:', margin, '    tp:', all_tp_eval[i], '   tn', all_tn_eval[i], '   fp', all_fp_eval[i], '   fn', all_fn_eval[i], '   acc', all_acc_eval[i], '   far', all_far_eval[i], '   tar', all_tar_eval[i])
+    print('\nFinal - Fusao 2D+3D - dataset: %s  -  acc_mean: %.6f +- %.6f  -  tar: %.6f +- %.6f    far: %.6f' % (FLAGS.dataset, acc_mean, acc_std, tar_mean, tar_std, far_mean))
+    print('Finished!')
 
-    path_file = '/'.join(MODEL_PATH.split('/')[:-1]) + '/' + 'evaluation_fusion_2D+3D_on_dataset=' + FLAGS.dataset + '.csv'
-    print('Saving to CSV file:', path_file)
-    save_metric_to_text_file(path_file, all_margins_eval, all_tp_eval, all_fp_eval, all_tn_eval, all_fn_eval, all_acc_eval, all_far_eval, all_tar_eval)
-
-
-def cosine_distance(embds0, embds1):
-    cos_dist = np.zeros(embds0.shape[0], dtype=np.float32)
-    for i in range(cos_dist.shape[0]):
-        cos_dist[i] = 1 - np.dot(embds0[i], embds1[i])/(np.linalg.norm(embds0[i])*np.linalg.norm(embds1[i]))
-    return cos_dist
-
-def eval_one_epoch(distances, margin=0.5):
-    total_tp, total_tn, total_fp, total_fn, total_acc = 0, 0, 0, 0, 0
-    total_far, total_tar = 0, 0
-
-    total_correct = 0
-    total_seen = 0
-    # batch_idx = 0
-
-    idx_dist = 0
-    while EVAL_DATASET.has_next_batch():
-        batch_data, batch_label = EVAL_DATASET.next_batch(augment=False)
-        bsize = batch_data.shape[1]    # Bernardo
-        
-        pred_labels = np.array([1 if d <= margin else 0 for d in distances[idx_dist:idx_dist+bsize]], dtype=np.int32)
-        batch_label = np.array(batch_label[0:bsize], dtype=np.int32)
-
-        correct = np.sum(pred_labels[0:bsize] == batch_label[0:bsize])
-        total_correct += correct
-        total_seen += bsize
-        # batch_idx += 1
-        
-        batch_tp = np.sum((pred_labels[0:bsize] == batch_label[0:bsize]) * (pred_labels[0:bsize] == 1))
-        batch_tn = np.sum((pred_labels[0:bsize] == batch_label[0:bsize]) * (pred_labels[0:bsize] == 0))
-        batch_fp = np.sum((pred_labels[0:bsize] != batch_label[0:bsize]) * (pred_labels[0:bsize] == 1))
-        batch_fn = np.sum((pred_labels[0:bsize] != batch_label[0:bsize]) * (pred_labels[0:bsize] == 0))
-        
-        total_tp += batch_tp
-        total_tn += batch_tn
-        total_fp += batch_fp
-        total_fn += batch_fn
-
-        idx_dist += bsize
-
-    total_acc = (float(total_tp) + float(total_tn)) / (float(total_tp) + float(total_tn) + float(total_fp) + float(total_fn))
-    total_far = float(total_fp) / (float(total_fp) + float(total_tn))
-    total_tar = float(total_tp) / (float(total_tp) + float(total_fn))
-    
-    EVAL_DATASET.reset()
-    return total_tp, total_tn, total_fp, total_fn, total_acc, total_far, total_tar
-    
     
 
 
