@@ -25,7 +25,7 @@ import provider
 # import modelnet_h5_dataset
 
 from data_loader.loader_reconstructed_MICA import lfw_evaluation_3Dreconstructed_MICA_dataset_pairs      # Bernardo
-from data_loader.loader_reconstructed_MICA import agedb_evaluation_3Dreconstructed_MICA_dataset_pairs      # Bernardo
+from data_loader.loader_reconstructed_MICA import magVerif_pairs_3Dreconstructed_MICA                    # Bernardo
 from data_loader.loader_reconstructed_MICA import calfw_evaluation_3Dreconstructed_MICA_dataset_pairs    # Bernardo
 
 parser = argparse.ArgumentParser()
@@ -41,15 +41,16 @@ parser.add_argument('--num_point', type=int, default=2900, help='Point Number [d
 # parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-2000subj_batch=16_margin=0.0/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 # parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-5000subj_batch=16_margin=0.0/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 # parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-1000subj_batch=16_margin=0.0_classification-layer=1/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
-parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_ms1mv2_1000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=32_m=0.0_06052023_114705/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
+# parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_ms1mv2_1000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=32_m=0.0_06052023_114705/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 # parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_ms1mv2_2000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=32_m=0.0_09062023_184940/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 # parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_ms1mv2_5000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-06_moment=0.9_loss=arcface_s=32_m=0.0_12062023_154451/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
-# parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_ms1mv2_10000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=32_m=0.0_26052023_222414/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
+parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_ms1mv2_10000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=32_m=0.0_26052023_222414/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 # parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_webface_1000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=16_m=0.0_05062023_194932/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 # parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_webface_2000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=16_m=0.0_05062023_213735/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 # parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_webface_5000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=32_m=0.0_06062023_235151/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 # parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_webface_10000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-06_moment=0.9_loss=arcface_s=32_m=0.0_13062023_123431/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 
+parser.add_argument('--num_class', type=int, default=1000, help='Number of training and testing classes')      # Bernardo
 
 parser.add_argument('--dump_dir', default='dump', help='dump folder path [dump]')
 # parser.add_argument('--normal', action='store_true', help='Whether to use normal information')      # original
@@ -57,23 +58,19 @@ parser.add_argument('--normal', type=bool, default=False, help='Whether to use n
 parser.add_argument('--num_votes', type=int, default=1, help='Aggregate classification scores from multiple rotations [default: 1]')
 parser.add_argument('--margin', type=float, default=0.5, help='Minimum distance for non-corresponding pairs in Contrastive Loss')
 
-# parser.add_argument('--dataset', type=str, default='frgc', help='Name of dataset to train model')   # Bernardo
-# parser.add_argument('--dataset', type=str, default='synthetic_gpmm', help='Name of dataset to train model')   # Bernardo
+# parser.add_argument('--dataset', type=str, default='frgc', help='Name of dataset to train model')                 # Bernardo
+# parser.add_argument('--dataset', type=str, default='synthetic_gpmm', help='Name of dataset to train model')       # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2', help='Name of dataset to train model')  # Bernardo
-parser.add_argument('--dataset', type=str, default='reconst_mica_lfw', help='Name of dataset to train model')     # Bernardo
-# parser.add_argument('--dataset', type=str, default='reconst_mica_agedb', help='Name of dataset to train model')     # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_mica_lfw', help='Name of dataset to train model')     # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_mica_agedb', help='Name of dataset to train model')   # Bernardo
+parser.add_argument('--dataset', type=str, default='reconst_mica_cfp', help='Name of dataset to train model')     # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_calfw', help='Name of dataset to train model')   # Bernardo
 
 FLAGS = parser.parse_args()
 
 
-NUM_CLASSES = 1000
-# NUM_CLASSES = 2000
-# NUM_CLASSES = 5000
-# NUM_CLASSES = 10000
 
-
-
+NUM_CLASSES = FLAGS.num_class
 BATCH_SIZE = FLAGS.batch_size
 NUM_POINT = FLAGS.num_point
 MODEL_PATH = FLAGS.model_path
@@ -90,14 +87,20 @@ HOSTNAME = socket.gethostname()
 
 
 if FLAGS.dataset.upper() == 'reconst_mica_lfw'.upper():
-    DATA_PATH = os.path.join(ROOT_DIR, '../../BOVIFOCR_MICA_3Dreconstruction/demo/output/lfw')
+    DATA_PATH = os.path.join(ROOT_DIR, '../../BOVIFOCR_MICA_3Dreconstruction/demo/output/lfw')                    # duo
     # DATA_PATH = os.path.join(ROOT_DIR, '/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/lfw')   # diolkos
-    # DATA_PATH = os.path.join(ROOT_DIR, '/nobackup1/bjgbiesseck/datasets/MICA_3Dreconstruction/lfw')
+    # DATA_PATH = os.path.join(ROOT_DIR, '/nobackup1/bjgbiesseck/datasets/MICA_3Dreconstruction/lfw')             # peixoto
     EVAL_DATASET = lfw_evaluation_3Dreconstructed_MICA_dataset_pairs.LFW_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
 elif FLAGS.dataset.upper() == 'reconst_mica_agedb'.upper():
     DATA_PATH = os.path.join(ROOT_DIR, '/datasets2/pbqv20/agedb_bkp/agedb_3d')   # duo
-    EVAL_DATASET = agedb_evaluation_3Dreconstructed_MICA_dataset_pairs.AGEDB_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    protocol_file_path = '/datasets2/pbqv20/agedb_bkp/pairs.txt'                 # duo
+    EVAL_DATASET = magVerif_pairs_3Dreconstructed_MICA.MAGFACE_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, protocol_file_path=protocol_file_path, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+
+elif FLAGS.dataset.upper() == 'reconst_mica_cfp'.upper():
+    DATA_PATH = os.path.join(ROOT_DIR, '/datasets2/pbqv20/cfp_bkp/cfp_3d')   # duo
+    protocol_file_path = '/datasets2/pbqv20/cfp_bkp/pairs.txt'               # duo
+    EVAL_DATASET = magVerif_pairs_3Dreconstructed_MICA.MAGFACE_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, protocol_file_path=protocol_file_path, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
 elif FLAGS.dataset.upper() == 'reconst_mica_calfw'.upper():
     DATA_PATH = os.path.join(ROOT_DIR, '../../BOVIFOCR_MICA_3Dreconstruction/demo/output/calfw')
@@ -472,9 +475,10 @@ def evaluate_varying_margin(num_votes):
             tp_idx, fp_idx, tn_idx, fn_idx, ta_idx, fa_idx = do_k_fold_test(all_distances_pointnet2, pairs_labels, verbose=True)
     acc_mean, acc_std = np.mean(accuracy), np.std(accuracy)
 
-    print('\nFinal - dataset: %s  -  acc_mean: %.6f +- %.6f  -  tar: %.6f +- %.6f    far: %.6f' % (FLAGS.dataset, acc_mean, acc_std, tar_mean, tar_std, far_mean))
+    print('\nMODEL_PATH:', MODEL_PATH)
+    print('Final - dataset: %s  -  acc_mean: %.6f +- %.6f  -  tar: %.6f +- %.6f    far: %.6f' % (FLAGS.dataset, acc_mean, acc_std, tar_mean, tar_std, far_mean))
     print('Finished!')
-    
+
 
 
 if __name__=='__main__':

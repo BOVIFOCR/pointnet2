@@ -26,6 +26,7 @@ import provider
 # import modelnet_h5_dataset
 
 from data_loader.loader_reconstructed_MICA import lfw_evaluation_3Dreconstructed_MICA_dataset_pairs      # Bernardo
+from data_loader.loader_reconstructed_MICA import magVerif_pairs_3Dreconstructed_MICA                    # Bernardo
 from data_loader.loader_reconstructed_MICA import calfw_evaluation_3Dreconstructed_MICA_dataset_pairs    # Bernardo
 
 parser = argparse.ArgumentParser()
@@ -50,6 +51,7 @@ parser.add_argument('--model_path', default='logs_training/classification/datase
 # parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_webface_5000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=32_m=0.0_06062023_235151/model_best_train_accuracy.ckpt', help='model checkpoint file path')   # Bernardo
 # parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_webface_10000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-06_moment=0.9_loss=arcface_s=32_m=0.0_13062023_123431/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 
+parser.add_argument('--num_class', type=int, default=1000, help='Number of training and testing classes')      # Bernardo
 
 parser.add_argument('--dump_dir', default='dump', help='dump folder path [dump]')
 # parser.add_argument('--normal', action='store_true', help='Whether to use normal information')      # original
@@ -60,23 +62,36 @@ parser.add_argument('--margin', type=float, default=0.5, help='Minimum distance 
 # parser.add_argument('--dataset', type=str, default='frgc', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='synthetic_gpmm', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2', help='Name of dataset to train model')  # Bernardo
-parser.add_argument('--dataset', type=str, default='reconst_mica_lfw', help='Name of dataset to train model')       # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_mica_lfw', help='Name of dataset to train model')     # Bernardo
+parser.add_argument('--dataset', type=str, default='reconst_mica_agedb', help='Name of dataset to train model')     # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_mica_cfp', help='Name of dataset to train model')     # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_calfw', help='Name of dataset to train model')   # Bernardo
+
+parser.add_argument('--arc_dists', type=str, default='/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=MS1MV3_1000subj_classes=1000_backbone=resnet-v2-m-50_epoch-num=100_margin=0.5_scale=64.0_lr=0.01_wd=0.0005_momentum=0.9_20230518-004011/lfw_distances_arcface=1000class_acc=0.94650.npy', help='')     # Bernardo
+
+
+
 
 FLAGS = parser.parse_args()
 
 
-NUM_CLASSES = 1000
-ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=MS1MV3_1000subj_classes=1000_backbone=resnet-v2-m-50_epoch-num=100_margin=0.5_scale=64.0_lr=0.01_wd=0.0005_momentum=0.9_20230518-004011/lfw_distances_arcface=1000class_acc=0.94650.npy'
+# NUM_CLASSES = 1000
+# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=MS1MV3_1000subj_classes=1000_backbone=resnet-v2-m-50_epoch-num=100_margin=0.5_scale=64.0_lr=0.01_wd=0.0005_momentum=0.9_20230518-004011/lfw_distances_arcface=1000class_acc=0.94650.npy'
+# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=MS1MV3_1000subj_classes=1000_backbone=resnet-v2-m-50_epoch-num=100_margin=0.5_scale=64.0_lr=0.01_wd=0.0005_momentum=0.9_20230518-004011/agedb_30_distances_arcface=1000class_acc=0.81083.npy'
+# ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=MS1MV3_1000subj_classes=1000_backbone=resnet-v2-m-50_epoch-num=100_margin=0.5_scale=64.0_lr=0.01_wd=0.0005_momentum=0.9_20230518-004011/cfp_fp_distances_arcface=1000class_acc=0.74843.npy'
+
 # ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=WebFace260M_1000subj_classes=1000_backbone=resnet_v2_m_50_epoch-num=100_loss=arcface_s=64.0_m=0.5_moment=0.9_batch=64_lr-init=0.01_20230524-142404/lfw_distances_arcface=1000class_acc=0.90117.npy'
+
 
 # NUM_CLASSES = 2000
 # ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=MS1MV3_2000subj_classes=2000_backbone=resnet-v2-m-50_epoch-num=100_margin=0.5_scale=64.0_lr=0.01_wd=0.0005_momentum=0.9_20230518-010456/lfw_distances_arcface=2000class_acc=0.96617.npy'
 # ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=WebFace260M_2000subj_classes=2000_backbone=resnet_v2_m_50_epoch-num=100_loss=arcface_s=64.0_m=0.5_moment=0.9_batch=64_lr-init=0.01_20230524-190517/lfw_distances_arcface=2000class_acc=0.94350.npy'
 
+
 # NUM_CLASSES = 5000
 # ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=MS1MV3_classes=5000_backbone=resnet_v2_m_50_epoch-num=100_loss=arcface_s=64.0_m=0.5_moment=0.9_batch=64_lr-init=0.1_20230518-214716/lfw_distances_arcface=5000class_acc=0.98417.npy'
 # ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=WebFace260M_5000subj_classes=5000_backbone=resnet_v2_m_50_epoch-num=150_loss=arcface_s=64.0_m=0.5_moment=0.9_batch=64_lr-init=0.01_20230525-093855/lfw_distances_arcface=5000class_acc=0.96467.npy'
+
 
 # NUM_CLASSES = 10000
 # ARCFACE_DISTANCES_FILE = '/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=MS1MV3_classes=10000_backbone=resnet_v2_m_50_epoch-num=200_loss=arcface_s=64.0_m=0.5_moment=0.9_batch=64_lr-init=0.005_20230522-100202/lfw_distances_arcface=10000class_acc=0.98583.npy'
@@ -88,6 +103,8 @@ NUM_POINT = FLAGS.num_point
 MODEL_PATH = FLAGS.model_path
 GPU_INDEX = FLAGS.gpu
 MARGIN = FLAGS.margin
+NUM_CLASSES = FLAGS.num_class
+ARCFACE_DISTANCES_FILE = FLAGS.arc_dists
 
 MODEL = importlib.import_module(FLAGS.model) # import network module
 DUMP_DIR = FLAGS.dump_dir
@@ -103,7 +120,17 @@ if FLAGS.dataset.upper() == 'reconst_mica_lfw'.upper():
     # DATA_PATH = os.path.join(ROOT_DIR, '/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/lfw')   # diolkos
     # DATA_PATH = os.path.join(ROOT_DIR, '/nobackup1/bjgbiesseck/datasets/MICA_3Dreconstruction/lfw')             # peixoto
     EVAL_DATASET = lfw_evaluation_3Dreconstructed_MICA_dataset_pairs.LFW_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
-    
+
+elif FLAGS.dataset.upper() == 'reconst_mica_agedb'.upper():
+    DATA_PATH = os.path.join(ROOT_DIR, '/datasets2/pbqv20/agedb_bkp/agedb_3d')   # duo
+    protocol_file_path = '/datasets2/pbqv20/agedb_bkp/pairs.txt'                 # duo
+    EVAL_DATASET = magVerif_pairs_3Dreconstructed_MICA.MAGFACE_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, protocol_file_path=protocol_file_path, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+
+elif FLAGS.dataset.upper() == 'reconst_mica_cfp'.upper():
+    DATA_PATH = os.path.join(ROOT_DIR, '/datasets2/pbqv20/cfp_bkp/cfp_3d')   # duo
+    protocol_file_path = '/datasets2/pbqv20/cfp_bkp/pairs.txt'               # duo
+    EVAL_DATASET = magVerif_pairs_3Dreconstructed_MICA.MAGFACE_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, protocol_file_path=protocol_file_path, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+
 elif FLAGS.dataset.upper() == 'reconst_mica_calfw'.upper():
     DATA_PATH = os.path.join(ROOT_DIR, '../../BOVIFOCR_MICA_3Dreconstruction/demo/output/calfw')
     EVAL_DATASET = calfw_evaluation_3Dreconstructed_MICA_dataset_pairs.CALFW_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
@@ -481,12 +508,11 @@ def evaluate_varying_margin(num_votes):
            'loss': total_loss,
            'end_points': end_points}
 
+    print('ArcFace (2D) - Loading distances from file:', ARCFACE_DISTANCES_FILE)
+    all_distances_arcface = np.load(ARCFACE_DISTANCES_FILE)
 
     print('PointNet++ (3D) - Computing all embeddings and distances...')
     all_distances_pointnet2, pairs_labels = compute_all_embeddings_and_distances_pointnet2(sess, ops)
-
-    print('ArcFace (2D) - Loading distances from file: ')
-    all_distances_arcface = np.load(ARCFACE_DISTANCES_FILE)
 
     print('Fusing distances...')
     final_distances = fuse_scores(all_distances_arcface, all_distances_pointnet2)
@@ -497,7 +523,8 @@ def evaluate_varying_margin(num_votes):
             tp_idx, fp_idx, tn_idx, fn_idx, ta_idx, fa_idx = do_k_fold_test(final_distances, pairs_labels, verbose=True)
     acc_mean, acc_std = np.mean(accuracy), np.std(accuracy)
 
-    print('\nFinal - Fusao 2D+3D - dataset: %s  -  acc_mean: %.6f +- %.6f  -  tar: %.6f +- %.6f    far: %.6f' % (FLAGS.dataset, acc_mean, acc_std, tar_mean, tar_std, far_mean))
+    print('\nMODEL_PATH:', MODEL_PATH)
+    print('Final - Fusao 2D+3D - dataset: %s  -  acc_mean: %.6f +- %.6f  -  tar: %.6f +- %.6f    far: %.6f' % (FLAGS.dataset, acc_mean, acc_std, tar_mean, tar_std, far_mean))
     print('Finished!')
 
     

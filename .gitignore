@@ -11,3 +11,4 @@ log/
 */logs_training/*
 
 face_recognition_3d/dump/*
+dump/*

@@ -11,7 +11,7 @@ from plots import plots_fr_pointnet2
 
 
 # BERNARDO
-class TreeAGEDB_3DReconstructedMICA:
+class TreeMAGFACE_3DReconstructedMICA:
 
     def get_all_sub_folders(self, dir_path=''):
         return sorted(glob(dir_path + '/*/*/'))
@@ -115,6 +115,51 @@ class TreeAGEDB_3DReconstructedMICA:
             return all_pos_pairs_paths, all_neg_pairs_paths, pos_pair_label, neg_pair_label
 
 
+    def load_all_pairs_samples_from_protocol_file(self, dataset_path='', protocol_file_path='pairs.txt', file_ext='.npy'):
+        pos_pair_label = '1'
+        neg_pair_label = '0'
+        all_pairs_paths_label = []
+        folds_indexes = []
+
+        with open(protocol_file_path, 'r') as fp:
+            all_lines = [line.rstrip('\n') for line in fp.readlines()]
+            # print('all_lines:', all_lines)
+
+            if len(all_lines[0].split('\t')) > 1:
+                num_folds, fold_size = int(all_lines[0].split('\t')[0]), int(all_lines[0].split('\t')[1])
+                total_num_pairs = num_folds*fold_size*2
+                global_pair_idx = 1
+            else:
+                num_folds = 1
+                fold_size = len(all_lines)
+                total_num_pairs = num_folds*fold_size
+                global_pair_idx = 0
+
+            while global_pair_idx < total_num_pairs:
+                start_fold_idx = global_pair_idx
+                end_fold_idx = start_fold_idx + (fold_size)
+
+                pos_pairs_paths = []
+                for _ in range(0, fold_size):
+                    pair = all_lines[global_pair_idx].split(' ')   # Abel_Pacheco	1	4
+                    index1, index2, label = pair
+                    assert index1 != index2
+                    path_sample1 = glob(os.path.join(dataset_path, index1, index1, '*'+file_ext))[0]
+                    path_sample2 = glob(os.path.join(dataset_path, index2, index2, '*'+file_ext))[0]
+
+                    pair = (label, path_sample1, path_sample2)
+                    # print('global_pair_idx:', global_pair_idx, '   ', 'pair:', pair)
+
+                    global_pair_idx += 1 
+                    all_pairs_paths_label.append(pair) 
+
+                folds_indexes.append((start_fold_idx, end_fold_idx))
+
+            # sys.exit(0)
+            return all_pairs_paths_label, folds_indexes, pos_pair_label, neg_pair_label
+
+
+    '''
     def load_all_pairs_samples_from_protocol_file(self, protocol_file_path='pairs.txt', dataset_path='', file_ext='.npy'):
         pos_pair_label = '1'
         neg_pair_label = '0'
@@ -154,6 +199,7 @@ class TreeAGEDB_3DReconstructedMICA:
                 all_pairs_paths_label += neg_pairs_paths
 
             return all_pairs_paths_label, pos_pair_label, neg_pair_label
+    '''
 
 
 if __name__ == '__main__':

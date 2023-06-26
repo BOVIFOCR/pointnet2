@@ -18,7 +18,7 @@ import struct
 from plyfile import PlyData
 
 # from tree_lfw_3Dreconstructed_MICA import TreeLFW_3DReconstructedMICA
-from tree_agedb_3Dreconstructed_MICA import TreeAGEDB_3DReconstructedMICA
+from data_loader.loader_reconstructed_MICA.tree_MagVerif_3Dreconstructed_MICA import TreeMAGFACE_3DReconstructedMICA
 
 def pc_normalize(pc):
     # Bernardo
@@ -33,24 +33,23 @@ def pc_normalize(pc):
 
     return pc
 
-class AGEDB_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs():
-    def __init__(self, root, batch_size = 32, npoints = 2900, normalize=True, normal_channel=False, modelnet10=False, cache_size=15000, shuffle=False):
+class MAGFACE_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs():
+    def __init__(self, root, protocol_file_path='pairs.txt', batch_size = 32, npoints = 2900, normalize=True, normal_channel=False, modelnet10=False, cache_size=15000, shuffle=False):
         self.root = root
         self.batch_size = batch_size
         self.npoints = npoints
         self.normalize = normalize
         self.normal_channel = normal_channel
-        
+
         # Bernardo
         # file_ext = '.ply'
         file_ext = 'mesh_centralized-nosetip_with-normals_filter-radius=100.npy'
-        # file_ext = 'mesh_upsample_MetaPU_upsample_MetaPU_centralized-nosetip_with-normals_filter-radius=100.npy'
 
-        protocol_file_path = root + '/pairs.txt'
-        all_pairs_paths_label, pos_pair_label, neg_pair_label = TreeAGEDB_3DReconstructedMICA().load_all_pairs_samples_from_protocol_file(protocol_file_path, root, file_ext)
+        # protocol_file_path = root + '/pairs.txt'
+        all_pairs_paths_label, folds_indexes, pos_pair_label, neg_pair_label = TreeMAGFACE_3DReconstructedMICA().load_all_pairs_samples_from_protocol_file(root, protocol_file_path, file_ext)
 
         self.datapath = all_pairs_paths_label
-        
+
         # self.cat = ['0', '1']    # Bernardo
         self.cat = [neg_pair_label, pos_pair_label]    # Bernardo
         self.classes = dict(zip(self.cat, range(len(self.cat))))  
