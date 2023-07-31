@@ -12,3 +12,6 @@ log/
 
 face_recognition_3d/dump/*
 dump/*
+
+face_recognition_3d/results_ijbc_template/*
+face_recognition_3d/results_ijbc_single_img/*

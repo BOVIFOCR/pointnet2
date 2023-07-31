@@ -122,13 +122,15 @@ if FLAGS.dataset.upper() == 'reconst_mica_lfw'.upper():
     EVAL_DATASET = lfw_evaluation_3Dreconstructed_MICA_dataset_pairs.LFW_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
 elif FLAGS.dataset.upper() == 'reconst_mica_agedb'.upper():
-    DATA_PATH = os.path.join(ROOT_DIR, '/datasets2/pbqv20/agedb_bkp/agedb_3d')   # duo
+    # DATA_PATH = os.path.join(ROOT_DIR, '/datasets2/pbqv20/agedb_bkp/agedb_3d') # duo
+    DATA_PATH = os.path.join(ROOT_DIR, '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/lfw_cfp_agedb/agedb/imgs')   # duo
     protocol_file_path = '/datasets2/pbqv20/agedb_bkp/pairs.txt'                 # duo
     EVAL_DATASET = magVerif_pairs_3Dreconstructed_MICA.MAGFACE_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, protocol_file_path=protocol_file_path, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
 elif FLAGS.dataset.upper() == 'reconst_mica_cfp'.upper():
-    DATA_PATH = os.path.join(ROOT_DIR, '/datasets2/pbqv20/cfp_bkp/cfp_3d')   # duo
-    protocol_file_path = '/datasets2/pbqv20/cfp_bkp/pairs.txt'               # duo
+    # DATA_PATH = os.path.join(ROOT_DIR, '/datasets2/pbqv20/cfp_bkp/cfp_3d')  # duo
+    DATA_PATH = os.path.join(ROOT_DIR, '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/lfw_cfp_agedb/cfp/imgs')   # duo
+    protocol_file_path = '/datasets2/pbqv20/cfp_bkp/pairs.txt'                # duo
     EVAL_DATASET = magVerif_pairs_3Dreconstructed_MICA.MAGFACE_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, protocol_file_path=protocol_file_path, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
 elif FLAGS.dataset.upper() == 'reconst_mica_calfw'.upper():

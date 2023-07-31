@@ -144,8 +144,10 @@ class TreeMAGFACE_3DReconstructedMICA:
                     pair = all_lines[global_pair_idx].split(' ')   # Abel_Pacheco	1	4
                     index1, index2, label = pair
                     assert index1 != index2
-                    path_sample1 = glob(os.path.join(dataset_path, index1, index1, '*'+file_ext))[0]
-                    path_sample2 = glob(os.path.join(dataset_path, index2, index2, '*'+file_ext))[0]
+                    path_sample1 = glob(os.path.join(dataset_path, index1, '*'+file_ext))[0]
+                    path_sample2 = glob(os.path.join(dataset_path, index2, '*'+file_ext))[0]
+                    # path_sample1 = glob(os.path.join(dataset_path, index1, index1, '*'+file_ext))[0]
+                    # path_sample2 = glob(os.path.join(dataset_path, index2, index2, '*'+file_ext))[0]
 
                     pair = (label, path_sample1, path_sample2)
                     # print('global_pair_idx:', global_pair_idx, '   ', 'pair:', pair)
