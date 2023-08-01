@@ -49,25 +49,16 @@ def sample_colours_from_colourmap(n_colours, colour_map):
     cm = plt.get_cmap(colour_map)
     return [cm(1.0 * i / n_colours)[:3] for i in range(n_colours)]
 
-'''
-from data_loader.loader_reconstructed_MICA import lfw_evaluation_3Dreconstructed_MICA_dataset_pairs      # Bernardo
-from data_loader.loader_reconstructed_MICA import magVerif_pairs_3Dreconstructed_MICA                    # Bernardo
-from data_loader.loader_reconstructed_MICA import calfw_evaluation_3Dreconstructed_MICA_dataset_pairs    # Bernardo
-'''
 
 parser = argparse.ArgumentParser(description='do ijb test')
 parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 0]')
 # parser.add_argument('--model', default='pointnet2_cls_ssg', help='Model name [default: pointnet2_cls_ssg]')  # original
 parser.add_argument('--model', default='pointnet2_cls_ssg_angmargin', help='Model name [default: pointnet2_cls_ssg_angmargin]')    # Bernardo
-parser.add_argument('--batch_size', type=int, default=1, help='Batch Size during training [default: 16]')
+parser.add_argument('--batch_size', type=int, default=128, help='Batch Size during training [default: 16]')
 # parser.add_argument('--num_point', type=int, default=1024, help='Point Number [default: 1024]')    # original
 parser.add_argument('--num_point', type=int, default=2900, help='Point Number [default: 1024]')      # Bernardo
 
 # parser.add_argument('--model_path', default='log/model.ckpt', help='model checkpoint file path [default: log/model.ckpt]')   # original
-# parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-1000subj_batch=16_margin=0.0/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
-# parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-2000subj_batch=16_margin=0.0/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
-# parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-5000subj_batch=16_margin=0.0/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
-# parser.add_argument('--model_path', default='logs_training/classification/log_face_recognition_train_arcface=ms1mv2-1000subj_batch=16_margin=0.0_classification-layer=1/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_ms1mv2_1000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=32_m=0.0_06052023_114705/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 # parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_ms1mv2_2000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-05_moment=0.9_loss=arcface_s=32_m=0.0_09062023_184940/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
 # parser.add_argument('--model_path', default='logs_training/classification/dataset=reconst_mica_ms1mv2_5000subj_model=pointnet2_cls_ssg_angmargin_max_epoch=100_lr-init=5e-06_moment=0.9_loss=arcface_s=32_m=0.0_12062023_154451/model_best_train_accuracy.ckpt', help='model checkpoint file path')  # Bernardo
@@ -85,13 +76,6 @@ parser.add_argument('--normal', type=bool, default=False, help='Whether to use n
 parser.add_argument('--num_votes', type=int, default=1, help='Aggregate classification scores from multiple rotations [default: 1]')
 parser.add_argument('--margin', type=float, default=0.5, help='Minimum distance for non-corresponding pairs in Contrastive Loss')
 
-# parser.add_argument('--dataset', type=str, default='frgc', help='Name of dataset to train model')                 # Bernardo
-# parser.add_argument('--dataset', type=str, default='synthetic_gpmm', help='Name of dataset to train model')       # Bernardo
-# parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2', help='Name of dataset to train model')  # Bernardo
-# parser.add_argument('--dataset', type=str, default='reconst_mica_lfw', help='Name of dataset to train model')     # Bernardo
-# parser.add_argument('--dataset', type=str, default='reconst_mica_agedb', help='Name of dataset to train model')   # Bernardo
-# parser.add_argument('--dataset', type=str, default='reconst_mica_cfp', help='Name of dataset to train model')     # Bernardo
-# parser.add_argument('--dataset', type=str, default='reconst_mica_calfw', help='Name of dataset to train model')   # Bernardo
 
 FLAGS = parser.parse_args()
 
@@ -116,14 +100,14 @@ target = 'IJBC'
 # config_path = args.config_path
 model_path = FLAGS.model_path
 # image_path = '/datasets1/bjgbiesseck/IJB-C/rec_data_ijbc/'
-image_path = '/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/IJB-C/IJB/IJB-C/rec_data_ijbc'
-protocols_path = '/datasets1/bjgbiesseck/IJB-C/rec_data_ijbc'
-result_dir = 'results_ijbc_template'
+image_path = '/datasets1/bjgbiesseck/IJB-C/IJB/IJB-C/3D_reconstruction_MICA/crops_align'
+result_dir = 'results_ijbc_single_img'
 gpu_id = None
 use_norm_score = True  # if Ture, TestMode(N1)
 # use_detector_score = True  # if Ture, TestMode(D1)
 use_detector_score = False   # if Ture, TestMode(D1)
-use_flip_test = True  # if Ture, TestMode(F1)
+# use_flip_test = True  # if Ture, TestMode(F1)
+use_flip_test = False   # if Ture, TestMode(F1)
 job = 'insightface'
 # batch_size = 128
 
@@ -133,7 +117,7 @@ class Embedding(object):
         image_size = (112, 112)
         self.image_size = image_size
 
-        # original
+        # LOAD TRAINED MODEL (original)
         # weight = torch.load(prefix)
         # resnet = get_model(args.network, dropout=0, fp16=False).cuda()
         # resnet.load_state_dict(weight)
@@ -213,13 +197,13 @@ class Embedding(object):
         # print('feat.shape:', feat.shape)
 
         if np.sum(np.isnan(batch_data)) > 0:
-            print('Error, nan found')
+            print('\nError, nan found in input data')
             print('batch_data:', batch_data)
             print('batch_data.shape:', batch_data.shape)
             sys.exit(0)
         
         if np.sum(np.isnan(cur_embd)) > 0:
-            print('Error, nan found')
+            print('\nError, nan found in output embeddings')
             print('cur_embd:', cur_embd)
             print('cur_embd.shape:', cur_embd.shape)
             sys.exit(0)
@@ -246,6 +230,16 @@ def read_template_media_list(path):
     return templates, medias
 
 
+# BERNARDO
+def read_template_original_ijbc(path):
+    # ijb_meta = np.loadtxt(path, dtype=str)
+    ijb_meta = pd.read_csv(path, sep=',', header=0).values
+    template_id = ijb_meta[:, 0].astype(int)
+    subject_id = ijb_meta[:, 1]
+    filename = ijb_meta[:, 2]
+    return template_id, subject_id, filename
+
+
 # In[ ]:
 
 
@@ -258,6 +252,53 @@ def read_template_pair_list(path):
     t2 = pairs[:, 1].astype(np.int)
     label = pairs[:, 2].astype(np.int)
     return t1, t2, label
+
+
+# BERNARDO
+def read_template_pair_list_original_ijbc(path):
+    pairs = pd.read_csv(path, sep=',', header=0).values
+    t1 = pairs[:, 0].astype(np.int)
+    t2 = pairs[:, 1].astype(np.int)
+    # label = pairs[:, 2].astype(np.int)
+    # return t1, t2, label
+    return t1, t2
+
+
+# BERNARDO
+def make_labels_from_template_pairs_original_ijbc(enroll_template_id, enroll_subject_id, verif_template_id, verif_subject_id, p1, p2):
+    assert len(p1) == len(p2)
+
+    enroll_template_dict = {}
+    for i in range(len(enroll_template_id)):
+        enroll_template_dict[enroll_template_id[i]] = enroll_subject_id[i]
+
+    verif_template_dict = {}
+    for i in range(len(verif_template_id)):
+        verif_template_dict[verif_template_id[i]] = verif_subject_id[i]
+
+    label = np.zeros((len(p1)), dtype=int)
+    for i, (t1, t2) in enumerate(zip(p1, p2)):
+        label[i] = int(enroll_template_dict[t1] == verif_template_dict[t2])
+
+    return label
+
+
+# BERNARDO
+def adjust_file_names(enroll_subject_id, enroll_filenames, verif_subject_id, verif_filenames):
+    enroll_img_paths = [None] * len(enroll_filenames)
+    verif_img_paths = [None] * len(verif_filenames)
+
+    for i in range(len(enroll_img_paths)):
+        enroll_data = enroll_filenames[i].split('/')
+        enroll_img_paths[i] = os.path.join(enroll_data[0], str(enroll_subject_id[i])+'_'+enroll_data[1].replace('.png', '.jpg')) + str(' -1' * 10) + ' 1.0'
+
+    for i in range(len(verif_filenames)):
+        verif_data = verif_filenames[i].split('/')
+        verif_img_paths[i] = os.path.join(verif_data[0], str(verif_subject_id[i])+'_'+verif_data[1].replace('.png', '.jpg')) + str(' -1' * 10) + ' 1.0'
+
+    files_list = enroll_img_paths
+    return files_list
+
 
 
 # In[ ]:
@@ -298,37 +339,15 @@ def get_image_feature(img_path, files_list, model_path, epoch, gpu_id):
     # img_feats = np.empty((len(files), 1024), dtype=np.float32)
     img_feats = np.empty((len(files), NUM_CLASSES), dtype=np.float32)
 
-    '''
-    # Bernardo
-    config = yaml.load(open(args.config_path))
-    images = tf.placeholder(dtype=tf.float32, shape=[None, config['image_size'], config['image_size'], 3], name='input_image')
-    train_phase_dropout = tf.placeholder(dtype=tf.bool, shape=None, name='train_phase')
-    train_phase_bn = tf.placeholder(dtype=tf.bool, shape=None, name='train_phase_last')
-    embds, _ = get_embd(images, train_phase_dropout, train_phase_bn, config)
-    print('done!')
-    tf_config = tf.ConfigProto(allow_soft_placement=True)
-    tf_config.gpu_options.allow_growth = True
-    with tf.Session(config=tf_config) as sess:
-        tf.global_variables_initializer().run()
-        print('loading model:', model_path)
-        saver = tf.train.Saver()
-        saver.restore(sess, model_path)
-        print('done!')
-        # Bernardo
-    '''
-
+    # LOAD TRAINED MODEL (Bernardo)
     is_training = False
     with tf.device('/gpu:'+str(GPU_INDEX)):
         pointclouds_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE, NUM_POINT)
         is_training_pl = tf.placeholder(tf.bool, shape=())
 
-        # simple model
-        # pred, end_points = MODEL.get_model(pointclouds_pl, is_training_pl)
         embd, end_points, weights_fc3 = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=None, num_class=NUM_CLASSES)    # Bernardo
-        
-        # MODEL.get_loss(pred, labels_pl, end_points)
         embds, pred, loss, classify_loss = MODEL.get_loss_arcface(embd, labels_pl, end_points, weights_fc3, num_classes=NUM_CLASSES)
-        
+
         losses = tf.get_collection('losses')
         total_loss = tf.add_n(losses, name='total_loss')
 
@@ -358,9 +377,10 @@ def get_image_feature(img_path, files_list, model_path, epoch, gpu_id):
 
 
         # batch_data = np.empty((2 * batch_size, 3, 112, 112))  # original
-        # batch_data = np.empty((2 * batch_size, 112, 112, 3))  # Bernardo
         batch_data = np.empty((batch_size, 2900, 3))            # Bernardo
         embedding = Embedding(model_path, data_shape, batch_size)
+        num_batches = int(np.ceil(len(files) / batch_size))
+        print('Computing embeddings...')
         for img_index, each_line in enumerate(files[:len(files) - rare_size]):
             name_lmk_score = each_line.strip().split(' ')
             
@@ -368,10 +388,9 @@ def get_image_feature(img_path, files_list, model_path, epoch, gpu_id):
             file_ext = 'mesh_centralized-nosetip_with-normals_filter-radius=100.npy'  # Bernardo
             folder_name = name_lmk_score[0].split('.')[0]                             # Bernardo
             img_name = os.path.join(img_path, folder_name, file_ext)                  # Bernardo
-
             # print('get_image_feature - img_name:', img_name)
 
-            '''  # original
+            '''  # original (not necessary for 3D point clouds)
             img = cv2.imread(img_name)
             lmk = np.array([float(x) for x in name_lmk_score[1:-1]],
                         dtype=np.float32)
@@ -387,29 +406,31 @@ def get_image_feature(img_path, files_list, model_path, epoch, gpu_id):
                 point_set = point_set[:,0:3]  # remove normals and curvature
             point_set = pc_normalize(point_set)
 
-            # batch_data[2 * (img_index - batch * batch_size)][:] = input_blob[0]
-            # batch_data[2 * (img_index - batch * batch_size) + 1][:] = input_blob[1]
-            batch_data[(img_index - batch * batch_size)][:] = point_set[:2900]
+            # batch_data[2 * (img_index - batch * batch_size)][:] = input_blob[0]       # original
+            # batch_data[2 * (img_index - batch * batch_size) + 1][:] = input_blob[1]   # original
+            batch_data[(img_index - batch * batch_size)][:] = point_set[:2900]          # Bernardo
             if (img_index + 1) % batch_size == 0:
-                print('batch', batch)
+                # print('batch', batch)
+                sys.stdout.write('batch {}/{}\r'.format(batch, num_batches-1))
+                sys.stdout.flush()
                 img_feats[batch * batch_size:batch * batch_size +
                                             batch_size][:] = embedding.forward_db(batch_data, sess, ops)
                 batch += 1
             faceness_scores.append(name_lmk_score[-1])
 
         # batch_data = np.empty((2 * rare_size, 3, 112, 112))   # original
-        # batch_data = np.empty((2 * rare_size, 112, 112, 3))   # Bernardo
-        batch_data = np.empty((rare_size, 2900, 3))            # Bernardo
+        batch_data = np.empty((rare_size, 2900, 3))             # Bernardo
         embedding = Embedding(model_path, data_shape, rare_size)
         for img_index, each_line in enumerate(files[len(files) - rare_size:]):
             name_lmk_score = each_line.strip().split(' ')
 
-            # img_name = os.path.join(img_path, name_lmk_score[0])    # original
+            # img_name = os.path.join(img_path, name_lmk_score[0])                    # original
             file_ext = 'mesh_centralized-nosetip_with-normals_filter-radius=100.npy'  # Bernardo
             folder_name = name_lmk_score[0].split('.')[0]                             # Bernardo
             img_name = os.path.join(img_path, folder_name, file_ext)                  # Bernardo
+            # print('get_image_feature - img_name:', img_name)
 
-            '''  # original
+            '''  # original (not necessary for 3D point clouds)
             img = cv2.imread(img_name)
             lmk = np.array([float(x) for x in name_lmk_score[1:-1]],
                         dtype=np.float32)
@@ -423,15 +444,16 @@ def get_image_feature(img_path, files_list, model_path, epoch, gpu_id):
 
             if point_set.shape[1] > 3:        # if contains normals and curvature
                 point_set = point_set[:,0:3]  # remove normals and curvature
+
             point_set = pc_normalize(point_set)
 
-            # batch_data[2 * img_index][:] = input_blob[0]
-            # batch_data[2 * img_index + 1][:] = input_blob[1]
-            batch_data[img_index][:] = point_set[:2900]   # Bernardo
+            # batch_data[2 * img_index][:] = input_blob[0]       # original
+            # batch_data[2 * img_index + 1][:] = input_blob[1]   # original
+            batch_data[img_index][:] = point_set[:2900]          # Bernardo
             if (img_index + 1) % rare_size == 0:
-                print('batch', batch)
-                print('len(files) - rare_size:', len(files) - rare_size)
-                print('img_feats[len(files)-rare_size:].shape:', img_feats[len(files)-rare_size:].shape)
+                # print('batch', batch)
+                sys.stdout.write('batch {}/{}\r'.format(batch, num_batches-1))
+                sys.stdout.flush()
                 img_feats[len(files) -
                         rare_size:][:] = embedding.forward_db(batch_data, sess, ops)
                 batch += 1
@@ -477,11 +499,12 @@ def image2template_feature(img_feats=None, templates=None, medias=None):
         # media_norm_feats = media_norm_feats / np.sqrt(np.sum(media_norm_feats ** 2, -1, keepdims=True))
         template_feats[count_template] = np.sum(media_norm_feats, axis=0)
         if count_template % 2000 == 0:
-            print('Finish Calculating {} template features.'.format(
-                count_template))
+            # print('Finish Calculating {} template features.'.format(count_template))
+            sys.stdout.write('Finish Calculating template features: {}/{}\r'.format(count_template, img_feats.shape[0]))
+            sys.stdout.flush()
     # template_norm_feats = template_feats / np.sqrt(np.sum(template_feats ** 2, -1, keepdims=True))
     template_norm_feats = sklearn.preprocessing.normalize(template_feats)
-    # print(template_norm_feats.shape)
+    print('')
     return template_norm_feats, unique_templates
 
 
@@ -513,7 +536,10 @@ def verification(template_norm_feats=None,
         similarity_score = np.sum(feat1 * feat2, -1)
         score[s] = similarity_score.flatten()
         if c % 10 == 0:
-            print('Finish {}/{} pairs.'.format(c, total_sublists))
+            # print('Finish {}/{} pairs.'.format(c, total_sublists))
+            sys.stdout.write('Finish {}/{} pairs.\r'.format(c, total_sublists))
+            sys.stdout.flush()
+    print('')
     return score
 
 
@@ -552,158 +578,169 @@ exper_id = model_path.split('/')[-2]            # Bernardo
 save_path = os.path.join(result_dir, exper_id)  # Bernardo
 score_save_file = os.path.join(save_path, "%s.npy" % target.lower())
 label_save_file = os.path.join(save_path, "label.npy")
+img_feats_save_file = os.path.join(save_path, "img_feats.npy")
+faceness_scores_save_file = os.path.join(save_path, "faceness_scores.npy")
 
-# Bernardo
-if not os.path.exists(score_save_file):
+# Verification protocol files
+path_enroll_templates = '/datasets1/bjgbiesseck/IJB-C/IJB/IJB-C/protocols/test2/enroll_templates.csv'
+path_verif_templates =  '/datasets1/bjgbiesseck/IJB-C/IJB/IJB-C/protocols/test2/verif_templates.csv'
+path_match_pairs =      '/datasets1/bjgbiesseck/IJB-C/IJB/IJB-C/protocols/test2/match.csv'
+# path_match_pairs =    '/datasets1/bjgbiesseck/IJB-C/IJB/IJB-C/protocols/test2/match_TEST_BERNARDO.csv'  # Toy example for sanity check
 
-    # # Step1: Load Meta Data
 
+
+# # Step1: Load Meta Data
+# In[ ]:
+# =============================================================
+# load image and template relationships for template feature embedding
+# tid --> template id,  mid --> media id
+# format:
+#           image_name tid mid
+# =============================================================
+assert target == 'IJBC' or target == 'IJBB'
+start = timeit.default_timer()
+# templates, medias = read_template_media_list(os.path.join('%s/meta' % image_path, '%s_face_tid_mid.txt' % target.lower()))
+print('Loading enroll templates \'{}\'...'.format(path_enroll_templates))
+enroll_template_id, enroll_subject_id, enroll_filenames = read_template_original_ijbc(path_enroll_templates)  # one image protocol
+print('num enroll templates: {}'.format(len(enroll_template_id)))
+print('Loading verification templates \'{}\'...'.format(path_verif_templates))
+verif_template_id, verif_subject_id, verif_filenames = read_template_original_ijbc(path_verif_templates)      # one image protocol
+print('num verif templates: {}'.format(len(verif_template_id)))
+stop = timeit.default_timer()
+print('Time: %.2f s. ' % (stop - start))
+print('----------------------')
+
+# In[ ]:
+# =============================================================
+# load template pairs for template-to-template verification
+# tid : template id,  label : 1/0
+# format:
+#           tid_1 tid_2 label
+# =============================================================
+start = timeit.default_timer()
+# p1, p2, label = read_template_pair_list(os.path.join('%s/meta' % image_path, '%s_template_pair_label.txt' % target.lower()))
+print('Loading match pairs indexes \'{}\'...'.format(path_match_pairs))
+p1, p2 = read_template_pair_list_original_ijbc(path_match_pairs)
+label = make_labels_from_template_pairs_original_ijbc(enroll_template_id, enroll_subject_id, verif_template_id, verif_subject_id, p1, p2)
+num_genuine_pairs = np.sum(label == 1)
+num_impostor_pairs = np.sum(label == 0)
+assert num_genuine_pairs+num_impostor_pairs == len(label)
+print('num pairs: {}    (genuine: {}    impostor: {})'.format(len(label), num_genuine_pairs, num_impostor_pairs))
+stop = timeit.default_timer()
+print('Time: %.2f s. ' % (stop - start))
+print('----------------------')
+
+
+
+
+
+# # Step 2: Get Image Features
+if not os.path.exists(img_feats_save_file):   # Bernardo
     # In[ ]:
-
-    assert target == 'IJBC' or target == 'IJBB'
-
-    # =============================================================
-    # load image and template relationships for template feature embedding
-    # tid --> template id,  mid --> media id
-    # format:
-    #           image_name tid mid
-    # =============================================================
-    start = timeit.default_timer()
-    templates, medias = read_template_media_list(
-        # os.path.join('%s/meta' % image_path, '%s_face_tid_mid.txt' % target.lower()))      # original
-        os.path.join('%s/meta' % protocols_path, '%s_face_tid_mid.txt' % target.lower()))    # Bernardo
-    stop = timeit.default_timer()
-    print('Time: %.2f s. ' % (stop - start))
-
-    # In[ ]:
-
-    # =============================================================
-    # load template pairs for template-to-template verification
-    # tid : template id,  label : 1/0
-    # format:
-    #           tid_1 tid_2 label
-    # =============================================================
-    start = timeit.default_timer()
-    p1, p2, label = read_template_pair_list(
-        # os.path.join('%s/meta' % image_path, '%s_template_pair_label.txt' % target.lower()))     # original
-        os.path.join('%s/meta' % protocols_path, '%s_template_pair_label.txt' % target.lower()))   # Bernardo
-    stop = timeit.default_timer()
-    print('Time: %.2f s. ' % (stop - start))
-
-
-
-    # # Step 2: Get Image Features
-
-    # In[ ]:
-
     # =============================================================
     # load image features
     # format:
     #           img_feats: [image_num x feats_dim] (227630, 512)
     # =============================================================
     start = timeit.default_timer()
+    img_path = image_path     # Bernardo
+    files_list = adjust_file_names(enroll_subject_id, enroll_filenames, verif_subject_id, verif_filenames)   # Bernardo
 
-    # img_path = '%s/loose_crop' % image_path    # original
-    # img_path = '%s/refined_img' % image_path   # Bernardo  (for 2D images)
-    img_path = '%s/refined_img' % image_path   # Bernardo  (for 3D point clouds)
-
-    # img_list_path = '%s/meta/%s_name_5pts_score.txt' % (image_path, target.lower())     # original
-    img_list_path = '%s/meta/%s_name_5pts_score.txt' % (protocols_path, target.lower())   # Bernardo
-    img_list = open(img_list_path)
-    files = img_list.readlines()
-    # files_list = divideIntoNstrand(files, rank_size)
-    files_list = files
-
-    # print('img_path:', img_path)
-    # print('files_list:', files_list)
-    # sys.exit(0)
-
-    # img_feats
-    # for i in range(rank_size):
-    img_feats, faceness_scores = get_image_feature(img_path, files_list,
-                                                model_path, 0, gpu_id)
+    img_feats, faceness_scores = get_image_feature(img_path, files_list, model_path, 0, gpu_id)
     stop = timeit.default_timer()
     print('Time: %.2f s. ' % (stop - start))
-    print('Feature Shape: ({} , {}) .'.format(img_feats.shape[0],
-                                            img_feats.shape[1]))
-
-
-
-    # # Step3: Get Template Features
-
-    # In[ ]:
-
-    # =============================================================
-    # compute template features from image features.
-    # =============================================================
-    start = timeit.default_timer()
-    # ==========================================================
-    # Norm feature before aggregation into template feature?
-    # Feature norm from embedding network and faceness score are able to decrease weights for noise samples (not face).
-    # ==========================================================
-    # 1. FaceScore (Feature Norm)
-    # 2. FaceScore (Detector)
-
-    if use_flip_test:
-        # concat --- F1
-        # img_input_feats = img_feats
-        # add --- F2
-        img_input_feats = img_feats[:, 0:img_feats.shape[1] //
-                                        2] + img_feats[:, img_feats.shape[1] // 2:]
-    else:
-        img_input_feats = img_feats[:, 0:img_feats.shape[1] // 2]
-
-    if use_norm_score:
-        img_input_feats = img_input_feats
-    else:
-        # normalise features to remove norm information
-        img_input_feats = img_input_feats / np.sqrt(
-            np.sum(img_input_feats ** 2, -1, keepdims=True))
-
-    if use_detector_score:
-        print(img_input_feats.shape, faceness_scores.shape)
-        img_input_feats = img_input_feats * faceness_scores[:, np.newaxis]
-    else:
-        img_input_feats = img_input_feats
-
-    template_norm_feats, unique_templates = image2template_feature(
-        img_input_feats, templates, medias)
-    stop = timeit.default_timer()
-    print('Time: %.2f s. ' % (stop - start))
-
-
-
-
-    # # Step 4: Get Template Similarity Scores
-
-    # In[ ]:
-
-    # =============================================================
-    # compute verification scores between template pairs.
-    # =============================================================
-    start = timeit.default_timer()
-    score = verification(template_norm_feats, unique_templates, p1, p2)
-    stop = timeit.default_timer()
-    print('Time: %.2f s. ' % (stop - start))
-
-
-    # In[ ]:
-    # exper_id = model_path.split('/')[-2]            # Bernardo
-    # save_path = os.path.join(result_dir, exper_id)  # Bernardo
-    # save_path = os.path.join(result_dir, args.job)
-    # save_path = result_dir + '/%s_result' % target
-
+    print('Feature Shape: ({} , {}) .'.format(img_feats.shape[0], img_feats.shape[1]))
+    
+    # Bernardo
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
-    # score_save_file = os.path.join(save_path, "%s.npy" % target.lower())
-    np.save(score_save_file, score)
-    np.save(label_save_file, label)
+    print('Saving img_feats:', img_feats_save_file)
+    np.save(img_feats_save_file, img_feats)
+    print('Saving faceness_scores:', img_feats_save_file)
+    np.save(faceness_scores_save_file, faceness_scores)
+
+else:
+    print('Loading img_feats:', img_feats_save_file)
+    img_feats = np.load(img_feats_save_file)
+    print('Loading faceness_scores:', img_feats_save_file)
+    faceness_scores = np.load(faceness_scores_save_file)
+
+    print('Feature Shape: ({} , {}) .'.format(img_feats.shape[0], img_feats.shape[1]))
+print('----------------------')
 
 
-else:  # Bernardo: load saved scores (distances)
-    score = np.load(score_save_file)
-    label = np.load(label_save_file)
+
+
+
+# # Step3: Get Template Features
+# In[ ]:
+
+# =============================================================
+# compute template features from image features.
+# =============================================================
+start = timeit.default_timer()
+# ==========================================================
+# Norm feature before aggregation into template feature?
+# Feature norm from embedding network and faceness score are able to decrease weights for noise samples (not face).
+# ==========================================================
+# 1. FaceScore (Feature Norm)
+# 2. FaceScore (Detector)
+
+if use_flip_test:
+    # concat --- F1
+    # img_input_feats = img_feats
+    # add --- F2
+    img_input_feats = img_feats[:, 0:img_feats.shape[1] //
+                                    2] + img_feats[:, img_feats.shape[1] // 2:]
+else:
+    # img_input_feats = img_feats[:, 0:img_feats.shape[1] // 2]
+    img_input_feats = img_feats
+
+if use_norm_score:
+    img_input_feats = img_input_feats
+else:
+    # normalise features to remove norm information
+    img_input_feats = img_input_feats / np.sqrt(
+        np.sum(img_input_feats ** 2, -1, keepdims=True))
+
+if use_detector_score:
+    img_input_feats = img_input_feats * faceness_scores[:, np.newaxis]
+else:
+    img_input_feats = img_input_feats
+
+print('Computing template embeddings...')
+# template_norm_feats, unique_templates = image2template_feature(img_input_feats, templates, medias)                     # original
+template_norm_feats, unique_templates = image2template_feature(img_input_feats, enroll_template_id, verif_template_id)   # Bernardo
+print('Template Features Shape: ({} , {}) .'.format(template_norm_feats.shape[0], template_norm_feats.shape[1]))
+stop = timeit.default_timer()
+print('Time: %.2f s. ' % (stop - start))
+print('----------------------')
+
+
+
+
+
+# # Step 4: Get Template Similarity Scores
+# In[ ]:
+
+# =============================================================
+# compute verification scores between template pairs.
+# =============================================================
+start = timeit.default_timer()
+print('Computing pairs similarity scores...')
+score = verification(template_norm_feats, unique_templates, p1, p2)
+stop = timeit.default_timer()
+print('Time: %.2f s. ' % (stop - start))
+
+if not os.path.exists(save_path):
+    os.makedirs(save_path)
+# score_save_file = os.path.join(save_path, "%s.npy" % target.lower())
+print('Saving scores:', score_save_file)
+np.save(score_save_file, score)
+print('Saving labels:', label_save_file)
+np.save(label_save_file, label)
+print('----------------------')
 
 
 
@@ -727,6 +764,7 @@ x_labels = [10 ** -6, 10 ** -5, 10 ** -4, 10 ** -3, 10 ** -2, 10 ** -1]
 tpr_fpr_table = PrettyTable(['Methods'] + [str(x) for x in x_labels])
 fig = plt.figure()
 roc_auc = 0.0
+print('Evaluating model...')
 for method in methods:
     fpr, tpr, _ = roc_curve(label, scores[method])
     roc_auc = auc(fpr, tpr)
@@ -755,84 +793,17 @@ plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
 plt.title('ROC on IJB')
 plt.legend(loc="lower right")
-fig.savefig(os.path.join(save_path, '%s.pdf' % target.lower()))
+# fig.savefig(os.path.join(save_path, '%s.pdf' % target.lower()))
+path_save_fig = os.path.join(save_path, '%s.pdf' % target.lower())
+print('Saving ROC curve \'{}\''.format(path_save_fig))
+fig.savefig(path_save_fig)
+
+path_save_tpr_fpr_table = os.path.join(save_path, '%s_tpr_fpr_table.txt' % target.lower())
+with open(path_save_tpr_fpr_table, 'w') as f:
+    print('Saving tpr_fpr_table \'{}\''.format(path_save_tpr_fpr_table))
+    f.write('tpr_fpr_table\n')
+    f.write(tpr_fpr_table.get_string())
+    f.write('\nROC-AUC = %0.4f %%\n' % (roc_auc * 100))
+
 print(tpr_fpr_table)
-
-# Bernardo
-print('AUC = %0.4f %%' % (roc_auc * 100))
-
-
-
-
-
-
-
-
-
-def compute_all_embeddings_and_distances_pointnet2(sess, ops):
-    is_training = False
-
-    cur_batch_data = np.zeros((2,BATCH_SIZE,NUM_POINT,EVAL_DATASET.num_channel()))
-    cur_batch_label = np.zeros((BATCH_SIZE), dtype=np.int32)
-
-    all_distances = np.zeros((0), dtype=np.float32)
-    all_pairs_labels = np.zeros((0), dtype=np.int32)
-    print('all_distances.shape:', all_distances.shape, end='\r')
-    
-    while EVAL_DATASET.has_next_batch():
-        batch_data, batch_label = EVAL_DATASET.next_batch(augment=False)
-        # bsize = batch_data.shape[0]  # original
-        bsize = batch_data.shape[1]    # Bernardo
-        # for the last batch in the epoch, the bsize:end are from last batch
-        
-        cur_batch_data[0,0:bsize,...] = batch_data[0]
-        cur_batch_data[1,0:bsize,...] = batch_data[1]
-        cur_batch_label[0:bsize] = batch_label
-
-        feed_dict0 = {ops['pointclouds_pl']: cur_batch_data[0],
-                      ops['labels_pl']: cur_batch_label,
-                      ops['is_training_pl']: is_training}
-        
-        feed_dict1 = {ops['pointclouds_pl']: cur_batch_data[1],
-                      ops['labels_pl']: cur_batch_label,
-                      ops['is_training_pl']: is_training}
-
-        # loss_val, pred_val = sess.run([ops['loss'], ops['pred']], feed_dict=feed_dict)
-        # loss_val, ind_loss, distances, pred_labels = sess.run([ops['total_loss'], ops['individual_losses'], ops['distances'], ops['pred_labels']], feed_dict=feed_dict)
-        # batch_pred_sum += pred_labels
-
-        embds0, pred0 = sess.run([ops['embds'], ops['pred']], feed_dict=feed_dict0)
-        embds1, pred1 = sess.run([ops['embds'], ops['pred']], feed_dict=feed_dict1)
-        # pred_labels0 = np.argmax(pred_val0, 1)
-        # pred_labels1 = np.argmax(pred_val1, 1)
-        
-        distances = cosine_distance(embds0, embds1)
-        distances = distances[0:bsize]
-
-        all_distances = np.append(all_distances, distances, axis=0)
-        all_pairs_labels = np.append(all_pairs_labels, cur_batch_label[0:bsize], axis=0)
-        print('all_distances.shape:', all_distances.shape, end='\r')
-    print()
-
-    EVAL_DATASET.reset()
-    return all_distances, all_pairs_labels
-
-
-
-
-
-
-
-'''
-start = timeit.default_timer()
-# img_path = '%s/loose_crop' % image_path
-img_path = '%s/refined_img' % image_path
-img_list_path = '%s/meta/%s_name_5pts_score.txt' % (image_path, target.lower())
-img_list = open(img_list_path)
-files = img_list.readlines()
-# files_list = divideIntoNstrand(files, rank_size)
-files_list = files
-
-# evaluate_varying_margin(num_votes=FLAGS.num_votes)
-img_feats, faceness_scores = get_image_feature(image_path, files_list, model_path, 0, gpu_id)
-'''
+print('ROC-AUC = %0.4f %%' % (roc_auc * 100))   # Bernardo
