@@ -18,7 +18,7 @@ import struct
 from plyfile import PlyData
 import pickle
 
-from tree_ms1mv2_3Dreconstructed_MICA import TreeMS1MV2_3DReconstructedMICA
+from .tree_ms1mv2_3Dreconstructed_MICA import TreeMS1MV2_3DReconstructedMICA
 
 def pc_normalize(pc):
     # Bernardo

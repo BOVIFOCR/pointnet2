@@ -16,7 +16,7 @@ sys.path.append(os.path.join(ROOT_DIR, '../../../utils'))
 import provider
 import struct
 
-from tree_synthetic_faces import TreeSyntheticFacesGPMM
+from .tree_synthetic_faces import TreeSyntheticFacesGPMM
 
 def pc_normalize(pc):
     # Bernardo

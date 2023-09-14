@@ -14,7 +14,7 @@ ROOT_DIR = BASE_DIR
 sys.path.append(os.path.join(ROOT_DIR, '../../../utils'))
 import provider
 
-from tree_frgc import TreeFRGCv2
+from .tree_frgc import TreeFRGCv2
 
 def pc_normalize(pc):
     # Bernardo
