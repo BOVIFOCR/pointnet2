@@ -17,7 +17,7 @@ import provider
 import struct
 from plyfile import PlyData
 
-from tree_calfw_3Dreconstructed_MICA import TreeCALFW_3DReconstructedMICA
+from .tree_calfw_3Dreconstructed_MICA import TreeCALFW_3DReconstructedMICA
 
 def pc_normalize(pc):
     # Bernardo

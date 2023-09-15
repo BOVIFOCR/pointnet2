@@ -141,6 +141,8 @@ class TreeMAGFACE_3DReconstructedMICA:
 
                 pos_pairs_paths = []
                 for _ in range(0, fold_size):
+                    print(f'pair {global_pair_idx}/{total_num_pairs}', end='\r')
+
                     pair = all_lines[global_pair_idx].split(' ')   # Abel_Pacheco	1	4
                     index1, index2, label = pair
                     assert index1 != index2
@@ -157,6 +159,7 @@ class TreeMAGFACE_3DReconstructedMICA:
 
                 folds_indexes.append((start_fold_idx, end_fold_idx))
 
+            print()
             # sys.exit(0)
             return all_pairs_paths_label, folds_indexes, pos_pair_label, neg_pair_label
 

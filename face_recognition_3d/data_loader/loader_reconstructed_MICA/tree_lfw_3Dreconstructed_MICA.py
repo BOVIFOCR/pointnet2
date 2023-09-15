@@ -137,9 +137,9 @@ class TreeLFW_3DReconstructedMICA:
 
             global_pair_idx = 1
             while global_pair_idx < total_num_pairs:
-
                 pos_pairs_paths = []
-                for _ in range(1, fold_size+1):
+                for _ in range(0, fold_size):
+                    print(f'pair {global_pair_idx}/{total_num_pairs}', end='\r')
                     pos_pair = all_lines[global_pair_idx].split('\t')   # Aaron_Peirsol	1	2
                     subj_name, index1, index2 = pos_pair
                     assert index1 != index2
@@ -151,7 +151,8 @@ class TreeLFW_3DReconstructedMICA:
                 all_pairs_paths_label += pos_pairs_paths
 
                 neg_pairs_paths = []
-                for _ in range(1, fold_size+1):
+                for _ in range(0, fold_size):
+                    print(f'pair {global_pair_idx}/{total_num_pairs}', end='\r')
                     neg_pair = all_lines[global_pair_idx].split('\t')   # AJ_Cook	1	Marsha_Thomason	1
                     subj_name1, index1, subj_name2, index2 = neg_pair
                     assert subj_name1 != subj_name2
@@ -161,6 +162,8 @@ class TreeLFW_3DReconstructedMICA:
                     neg_pairs_paths.append(neg_pair)
                     global_pair_idx += 1
                 all_pairs_paths_label += neg_pairs_paths
+
+            print()
 
             return all_pairs_paths_label, pos_pair_label, neg_pair_label
 

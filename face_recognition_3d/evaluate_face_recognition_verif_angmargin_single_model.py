@@ -14,6 +14,7 @@ import os
 import scipy.misc
 from scipy import interpolate
 from sklearn.model_selection import KFold
+from sklearn.preprocessing import normalize
 import sys
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = BASE_DIR
@@ -61,9 +62,9 @@ parser.add_argument('--margin', type=float, default=0.5, help='Minimum distance 
 # parser.add_argument('--dataset', type=str, default='frgc', help='Name of dataset to train model')                 # Bernardo
 # parser.add_argument('--dataset', type=str, default='synthetic_gpmm', help='Name of dataset to train model')       # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2', help='Name of dataset to train model')  # Bernardo
-# parser.add_argument('--dataset', type=str, default='reconst_mica_lfw', help='Name of dataset to train model')     # Bernardo
+parser.add_argument('--dataset', type=str, default='reconst_mica_lfw', help='Name of dataset to train model')       # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_agedb', help='Name of dataset to train model')   # Bernardo
-parser.add_argument('--dataset', type=str, default='reconst_mica_cfp', help='Name of dataset to train model')     # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_mica_cfp', help='Name of dataset to train model')     # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_calfw', help='Name of dataset to train model')   # Bernardo
 
 FLAGS = parser.parse_args()
@@ -86,6 +87,7 @@ LOG_FOUT.write(str(FLAGS)+'\n')
 HOSTNAME = socket.gethostname()
 
 
+print('\nLoading dataset paths...')
 if FLAGS.dataset.upper() == 'reconst_mica_lfw'.upper():
     DATA_PATH = os.path.join(ROOT_DIR, '../../BOVIFOCR_MICA_3Dreconstruction/demo/output/lfw')                    # duo
     # DATA_PATH = os.path.join(ROOT_DIR, '/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/lfw')   # diolkos
@@ -141,10 +143,18 @@ def save_metric_to_text_file(path_file, all_margins_eval, all_tp_eval, all_fp_ev
             f.flush()
 
 
+def cosine_distance_insightface(embds0, embds1):
+    assert embds0.shape[0] == embds1.shape[0], f'Error, sizes of embds0 ({embds0.shape[0]}) and embds1 ({embds1.shape[0]}) are different. Must be equal!\n'
+    embds0 = normalize(embds0)
+    embds1 = normalize(embds1)
+    distances = np.sum(np.square(embds0 - embds1), axis=1)
+    return distances
+
 def cosine_distance(embds0, embds1):
+    assert embds0.shape[0] == embds1.shape[0], f'Error, sizes of embds0 ({embds0.shape[0]}) and embds1 ({embds1.shape[0]}) are different. Must be equal!\n'
     cos_dist = np.zeros(embds0.shape[0], dtype=np.float32)
     for i in range(cos_dist.shape[0]):
-        cos_dist[i] = 1 - np.dot(embds0[i], embds1[i])/(np.linalg.norm(embds0[i])*np.linalg.norm(embds1[i]))
+        cos_dist[i] = 1.0 - np.dot(embds0[i], embds1[i])/(np.linalg.norm(embds0[i])*np.linalg.norm(embds1[i]))
     return cos_dist
 
 
@@ -155,10 +165,11 @@ def compute_all_embeddings_and_distances_pointnet2(sess, ops):
     cur_batch_data = np.zeros((2,BATCH_SIZE,NUM_POINT,EVAL_DATASET.num_channel()))
     cur_batch_label = np.zeros((BATCH_SIZE), dtype=np.int32)
 
-    all_distances = np.zeros((0), dtype=np.float32)
-    all_pairs_labels = np.zeros((0), dtype=np.int32)
-    print('all_distances.shape:', all_distances.shape, end='\r')
+    all_distances = np.zeros((len(EVAL_DATASET)), dtype=np.float32)
+    all_pairs_labels = np.zeros((len(EVAL_DATASET)), dtype=np.int32)
+    # print('all_distances.shape:', all_distances.shape, end='\r')
     
+    curr_idx = 0
     while EVAL_DATASET.has_next_batch():
         batch_data, batch_label = EVAL_DATASET.next_batch(augment=False)
         # bsize = batch_data.shape[0]  # original
@@ -177,21 +188,21 @@ def compute_all_embeddings_and_distances_pointnet2(sess, ops):
                       ops['labels_pl']: cur_batch_label,
                       ops['is_training_pl']: is_training}
 
-        # loss_val, pred_val = sess.run([ops['loss'], ops['pred']], feed_dict=feed_dict)
-        # loss_val, ind_loss, distances, pred_labels = sess.run([ops['total_loss'], ops['individual_losses'], ops['distances'], ops['pred_labels']], feed_dict=feed_dict)
-        # batch_pred_sum += pred_labels
-
-        embds0, pred0 = sess.run([ops['embds'], ops['pred']], feed_dict=feed_dict0)
-        embds1, pred1 = sess.run([ops['embds'], ops['pred']], feed_dict=feed_dict1)
-        # pred_labels0 = np.argmax(pred_val0, 1)
-        # pred_labels1 = np.argmax(pred_val1, 1)
+        embd0, logits0 = sess.run([ops['embd'], ops['logits']], feed_dict=feed_dict0)
+        embd1, logits1 = sess.run([ops['embd'], ops['logits']], feed_dict=feed_dict1)
         
-        distances = cosine_distance(embds0, embds1)
+        # distances = cosine_distance(embd0, embd1)
+        distances = cosine_distance_insightface(embd0, embd1)
         distances = distances[0:bsize]
 
-        all_distances = np.append(all_distances, distances, axis=0)
-        all_pairs_labels = np.append(all_pairs_labels, cur_batch_label[0:bsize], axis=0)
-        print('all_distances.shape:', all_distances.shape, end='\r')
+        # all_distances = np.append(all_distances, distances, axis=0)
+        # all_pairs_labels = np.append(all_pairs_labels, cur_batch_label[0:bsize], axis=0)
+        all_distances[curr_idx:curr_idx+bsize] = distances
+        all_pairs_labels[curr_idx:curr_idx+bsize] = cur_batch_label[0:bsize]
+        print(f'all_distances: {curr_idx}/{len(EVAL_DATASET)}', end='\r')
+
+        curr_idx += bsize
+        
     print()
 
     EVAL_DATASET.reset()
@@ -433,12 +444,17 @@ def evaluate_varying_margin(num_votes):
         pointclouds_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE, NUM_POINT)
         is_training_pl = tf.placeholder(tf.bool, shape=())
 
+        '''
         # simple model
         # pred, end_points = MODEL.get_model(pointclouds_pl, is_training_pl)
         embd, end_points, weights_fc3 = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=None, num_class=NUM_CLASSES)    # Bernardo
 
         # MODEL.get_loss(pred, labels_pl, end_points)
         embds, pred, loss, classify_loss = MODEL.get_loss_arcface(embd, labels_pl, end_points, weights_fc3, num_classes=NUM_CLASSES)
+        '''
+
+        embd, logits, end_points, weights_fc3 = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=None, num_class=NUM_CLASSES)    # Bernardo
+        logits, loss, classify_loss = MODEL.get_loss_arcface(logits, labels_pl, end_points, weights_fc3, num_classes=NUM_CLASSES)
 
         losses = tf.get_collection('losses')
         total_loss = tf.add_n(losses, name='total_loss')
@@ -460,8 +476,8 @@ def evaluate_varying_margin(num_votes):
     ops = {'pointclouds_pl': pointclouds_pl,
            'labels_pl': labels_pl,
            'is_training_pl': is_training_pl,
-           'embds': embds,
-           'pred': pred,
+           'embd': embd,
+           'logits': logits,
            'loss': total_loss,
            'end_points': end_points}
 
