@@ -48,33 +48,33 @@ def get_model(point_cloud, is_training, bn_decay=None, num_class=0):
         '''
         with tf.variable_scope("fully_connected1") as scope:
             net, weights_fc1 = tf_util_angmargin.fully_connected(net, 512, bn=True, is_training=is_training, scope='fc1', bn_decay=bn_decay)
-            
+
         with tf.variable_scope("dropout1") as scope:
             net = tf_util_angmargin.dropout(net, keep_prob=0.5, is_training=is_training, scope='dp1')
-            
+
         with tf.variable_scope("fully_connected2") as scope:
             net, weights_fc2 = tf_util_angmargin.fully_connected(net, 256, bn=True, is_training=is_training, scope='fc2', bn_decay=bn_decay)
-            
+
         with tf.variable_scope("dropout2") as scope:
             net = tf_util_angmargin.dropout(net, keep_prob=0.5, is_training=is_training, scope='dp2')
         '''
         with tf.variable_scope("fully_connected3") as scope:
             # net = tf_util.fully_connected(net, 40, activation_fn=None, scope='fc3')        # original
-            net_class, weights_fc3 = tf_util_angmargin.fully_connected(embed, num_class, activation_fn=None, scope='fc3')   # Bernardo
+            fc3_output, weights_fc3 = tf_util_angmargin.fully_connected(embed, num_class, activation_fn=None, scope='fc3')   # Bernardo
 
         # Add one more layer to implement angular margin
         with tf.variable_scope("fully_connected4") as scope:
-            net_class, weights_fc4 = tf_util_angmargin.fully_connected(net_class, num_class, activation_fn=None, scope='fc4')   # Bernardo
+            logits, weights_fc4 = tf_util_angmargin.fully_connected(fc3_output, num_class, activation_fn=None, scope='fc4')   # Bernardo
 
     # return net, end_points, weights_fc3
-    return embed, net_class, end_points, weights_fc4
+    return embed, logits, end_points, weights_fc4
 
 
 
 # Bernardo
 # from: https://github.com/luckycallor/InsightFace-tensorflow/blob/0fda5dc7fe2a651de08b0ed1bb7cc0ebc2dcd9f7/losses/logit_loss.py#L21
-def get_loss_arcface(embd, labels, end_points, weights_fc, num_classes, m=0.5, s=32.0):
-    embds = tf.nn.l2_normalize(embd, dim=1, name='normed_embd')
+def get_loss_arcface(logits, labels, end_points, weights_fc, num_classes, m=0.5, s=32.0):
+    logits = tf.nn.l2_normalize(logits, dim=1, name='normed_embd')
     weights = tf.nn.l2_normalize(weights_fc, dim=0)
 
     cos_m = math.cos(m)
@@ -84,7 +84,7 @@ def get_loss_arcface(embd, labels, end_points, weights_fc, num_classes, m=0.5, s
 
     threshold = math.cos(math.pi - m)
 
-    cos_t = tf.matmul(embds, weights, name='cos_t')
+    cos_t = tf.matmul(logits, weights, name='cos_t')
 
     cos_t2 = tf.square(cos_t, name='cos_2')
     sin_t2 = tf.subtract(1., cos_t2, name='sin_2')
