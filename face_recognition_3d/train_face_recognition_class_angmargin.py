@@ -30,11 +30,12 @@ from plots import plots_fr_pointnet2
 
 # import modelnet_dataset     # original
 # import modelnet_h5_dataset  # original
-from data_loader.loader_frgc2 import frgc2_dataset                                           # Bernardo
-from data_loader.loader_synthetic_faces_gpmm import synthetic_faces_gpmm_dataset             # Bernardo
-from data_loader.loader_reconstructed_MICA import lfw_3Dreconstructed_MICA_dataset           # Bernardo
-from data_loader.loader_reconstructed_MICA import ms1mv2_3Dreconstructed_MICA_dataset        # Bernardo
-from data_loader.loader_reconstructed_MICA import webface_3Dreconstructed_MICA_dataset        # Bernardo
+from data_loader.loader_frgc2 import frgc2_dataset                                         # Bernardo
+from data_loader.loader_synthetic_faces_gpmm import synthetic_faces_gpmm_dataset           # Bernardo
+from data_loader.loader_reconstructed_MICA import lfw_3Dreconstructed_MICA_dataset         # Bernardo
+from data_loader.loader_reconstructed_MICA import ms1mv2_3Dreconstructed_MICA_dataset      # Bernardo
+from data_loader.loader_reconstructed_MICA import webface_3Dreconstructed_MICA_dataset     # Bernardo
+from data_loader.loader_reconstructed_HRN import ms1mv3_3Dreconstructed_HRN_dataset        # Bernardo
 
 
 # os.environ["CUDA_VISIBLE_DEVICES"]='-1' # cpu
@@ -67,7 +68,7 @@ parser.add_argument('--normal', type=bool, default=False, help='Whether to use n
 # parser.add_argument('--dataset', type=str, default='synthetic_gpmm', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_lfw', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2', help='Name of dataset to train model')   # Bernardo
-parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_reduced', help='Name of dataset to train model')   # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_reduced', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_1000subj', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_2000subj', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_5000subj', help='Name of dataset to train model')   # Bernardo
@@ -76,7 +77,7 @@ parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2_reduced'
 # parser.add_argument('--dataset', type=str, default='reconst_mica_webface_2000subj', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_webface_5000subj', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_webface_10000subj', help='Name of dataset to train model')   # Bernardo
-
+parser.add_argument('--dataset', type=str, default='reconst_hrn_ms1mv3_1000subj', help='Name of dataset to train model')   # Bernardo
 
 FLAGS = parser.parse_args()
 print('FLAGS:', FLAGS)
@@ -251,6 +252,14 @@ elif FLAGS.dataset.upper() == 'reconst_mica_webface_10000subj'.upper():
     TRAIN_DATASET = webface_3Dreconstructed_MICA_dataset.WEBFACE_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
     print('Loading test data...')
     TEST_DATASET  = webface_3Dreconstructed_MICA_dataset.WEBFACE_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+
+elif FLAGS.dataset.upper() == 'reconst_hrn_ms1mv3_1000subj'.upper():
+    min_samples, max_samples = 2, -1
+    DATA_PATH = os.path.join('/datasets1/bjgbiesseck/MS-Celeb-1M/ms1m-retinaface-t1/3D_reconstruction/HRN/images1000subj')  # duo
+    print('Loading train data...')
+    TRAIN_DATASET = ms1mv3_3Dreconstructed_HRN_dataset.MS1MV3_3D_Reconstructed_HRN_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    print('Loading test data...')
+    TEST_DATASET  = ms1mv3_3Dreconstructed_HRN_dataset.MS1MV3_3D_Reconstructed_HRN_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
 
 
