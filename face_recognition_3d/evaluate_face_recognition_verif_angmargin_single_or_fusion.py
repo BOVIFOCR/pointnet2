@@ -71,6 +71,10 @@ parser.add_argument('--dataset', type=str, default='reconst_hrn_lfw', help='Name
 # parser.add_argument('--dataset', type=str, default='reconst_hrn_agedb', help='Name of dataset to train model')    # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_hrn_cfp', help='Name of dataset to train model')      # Bernardo
 
+# Only for fusion of 2D and 3D models
+parser.add_argument('--fusion', action='store_true')
+parser.add_argument('--arc_dists', type=str, default='/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=MS1MV3_1000subj_classes=1000_backbone=resnet-v2-m-50_epoch-num=100_margin=0.5_scale=64.0_lr=0.01_wd=0.0005_momentum=0.9_20230518-004011/lfw_distances_arcface=1000class_acc=0.94650.npy', help='')     # Bernardo
+
 FLAGS = parser.parse_args()
 
 
@@ -81,6 +85,8 @@ NUM_POINT = FLAGS.num_point
 MODEL_PATH = FLAGS.model_path
 GPU_INDEX = FLAGS.gpu
 MARGIN = FLAGS.margin
+ARCFACE_DISTANCES_FILE = FLAGS.arc_dists
+
 
 MODEL = importlib.import_module(FLAGS.model) # import network module
 DUMP_DIR = FLAGS.dump_dir
@@ -459,7 +465,7 @@ def do_k_fold_test(folds_pair_distances, folds_pair_labels, verbose=True):
 # Bernardo
 def evaluate_varying_margin(num_votes):
     is_training = False
-            
+
     with tf.device('/gpu:'+str(GPU_INDEX)):
         pointclouds_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE, NUM_POINT)
         is_training_pl = tf.placeholder(tf.bool, shape=())
@@ -493,12 +499,23 @@ def evaluate_varying_margin(num_votes):
            'end_points': end_points}
 
 
-    print('PointNet++ (3D) - Computing all embeddings and distances...')
+    print('\nPointNet++ (3D) - Computing all embeddings and distances...')
     all_distances_pointnet2, pairs_labels = compute_all_embeddings_and_distances_pointnet2(sess, ops)
     # print('all_distances_pointnet2.shape:', all_distances_pointnet2.shape)
     # print('pairs_labels:', pairs_labels)
     # print('pairs_labels.shape:', pairs_labels.shape)
     # sys.exit(0)
+
+    if FLAGS.fusion and FLAGS.arc_dists != '':
+        print(f'\nLoading Arcface (2D) pair distances: \'{FLAGS.arc_dists}\'')
+        all_distances_arcface = np.load(FLAGS.arc_dists)
+        print('')
+
+        assert all_distances_pointnet2.shape[0] == all_distances_arcface.shape[0], f'Error, all_distances_pointnet2.shape[0] ({all_distances_pointnet2.shape[0]}) and all_distances_arcface.shape[0] ({all_distances_arcface.shape[0]}) must be equal'
+        print(f'Fusing scores 2D and 3D...')
+        all_distances_pointnet2 = (all_distances_pointnet2 + all_distances_arcface) / 2.0
+        print('')
+
 
     tpr, fpr, accuracy, tar_mean, tar_std, far_mean, \
             tp_idx, fp_idx, tn_idx, fn_idx, ta_idx, fa_idx = do_k_fold_test(all_distances_pointnet2, pairs_labels, verbose=True)

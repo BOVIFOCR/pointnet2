@@ -28,18 +28,31 @@ def get_model(point_cloud, is_training, bn_decay=None, num_class=0):
         l0_xyz = point_cloud
         l0_points = None
         end_points['l0_xyz'] = l0_xyz
+        interm_layers = {}
 
         # Set abstraction layers
         # Note: When using NCHW for layer 2, we see increased GPU memory usage (in TF1.4).
         # So we only use NCHW for layer 1 until this issue can be resolved.
         with tf.variable_scope("pointnet_sa_module1") as scope:
             l1_xyz, l1_points, l1_indices = pointnet_sa_module(l0_xyz, l0_points, npoint=512, radius=0.2, nsample=32, mlp=[64,64,128], mlp2=None, group_all=False, is_training=is_training, bn_decay=bn_decay, scope='layer1', use_nchw=True)
-        
+            interm_layers['layer1'] = {}
+            interm_layers['layer1']['l1_xyz'] = l1_xyz
+            interm_layers['layer1']['l1_points'] = l1_points
+            interm_layers['layer1']['l1_indices'] = l1_indices
+
         with tf.variable_scope("pointnet_sa_module2") as scope:
             l2_xyz, l2_points, l2_indices = pointnet_sa_module(l1_xyz, l1_points, npoint=128, radius=0.4, nsample=64, mlp=[128,128,256], mlp2=None, group_all=False, is_training=is_training, bn_decay=bn_decay, scope='layer2')
-        
+            interm_layers['layer2'] = {}
+            interm_layers['layer2']['l2_xyz'] = l2_xyz
+            interm_layers['layer2']['l2_points'] = l2_points
+            interm_layers['layer2']['l2_indices'] = l2_indices
+
         with tf.variable_scope("pointnet_sa_module3") as scope:
             l3_xyz, l3_points, l3_indices = pointnet_sa_module(l2_xyz, l2_points, npoint=None, radius=None, nsample=None, mlp=[256,512,1024], mlp2=None, group_all=True, is_training=is_training, bn_decay=bn_decay, scope='layer3')
+            interm_layers['layer3'] = {}
+            interm_layers['layer3']['l3_xyz'] = l3_xyz
+            interm_layers['layer3']['l3_points'] = l3_points
+            interm_layers['layer3']['l3_indices'] = l3_indices
 
         # Fully connected layers
         embed = tf.reshape(l3_points, [batch_size, -1])
@@ -67,7 +80,7 @@ def get_model(point_cloud, is_training, bn_decay=None, num_class=0):
             logits, weights_fc4 = tf_util_angmargin.fully_connected(fc3_output, num_class, activation_fn=None, scope='fc4')   # Bernardo
 
     # return net, end_points, weights_fc3
-    return embed, logits, end_points, weights_fc4
+    return interm_layers, embed, logits, end_points, weights_fc4
 
 
 
