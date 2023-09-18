@@ -33,7 +33,7 @@ def pc_normalize(pc):
 
     return pc
 
-class LFW_3D_Reconstructed_MICA_Dataset_Pairs():
+class LFW_3D_Reconstructed_MICA_Dataset_Pairs:
     def __init__(self, root, batch_size = 32, npoints = 2900, split='train', normalize=True, normal_channel=False, modelnet10=False, cache_size=15000, shuffle=None):
         self.root = root
         self.batch_size = batch_size

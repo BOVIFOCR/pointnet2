@@ -98,10 +98,12 @@ class MS1MV3_3D_Reconstructed_HRN_Dataset():
         assert(split=='train' or split=='test')
         self.datapath = []
 
+        train_prop = 0.8
+        # train_prop = 0.7
         if split=='train':
             last_index = 0
             for samp_per_subj, uniq_subj_name in zip(samples_per_subject, unique_subjects_names):
-                amount_train_samples_subj = int(floor(samp_per_subj * 0.8))
+                amount_train_samples_subj = int(floor(samp_per_subj * train_prop))
                 train_subj_with_paths = []
                 for i in range(last_index, len(subjects_with_pc_paths)):
                     if subjects_with_pc_paths[i][0] == uniq_subj_name:
@@ -112,10 +114,10 @@ class MS1MV3_3D_Reconstructed_HRN_Dataset():
                 assert len(train_subj_with_paths) == amount_train_samples_subj
                 self.datapath += train_subj_with_paths
                                 
-        elif split=='test':
+        elif split=='test' or split=='val':
             last_index = 0
             for samp_per_subj, uniq_subj_name in zip(samples_per_subject, unique_subjects_names):
-                amount_train_samples_subj = int(floor(samp_per_subj * 0.8))
+                amount_train_samples_subj = int(floor(samp_per_subj * train_prop))
                 amount_test_samples_subj = samp_per_subj - amount_train_samples_subj
                 test_subj_with_paths = []
                 for i in range(last_index+amount_train_samples_subj, len(subjects_with_pc_paths)):

@@ -33,7 +33,7 @@ def pc_normalize(pc):
 
     return pc
 
-class MAGFACE_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs():
+class MAGFACE_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs:
     def __init__(self, root, protocol_file_path='pairs.txt', batch_size = 32, npoints = 2900, normalize=True, normal_channel=False, modelnet10=False, cache_size=15000, shuffle=False):
         self.root = root
         self.batch_size = batch_size

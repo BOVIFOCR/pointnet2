@@ -24,6 +24,7 @@ sys.path.append(os.path.join(ROOT_DIR, '../models'))
 sys.path.append(os.path.join(ROOT_DIR, '../utils'))
 import provider
 import tf_util
+from pc_util import write_obj
 
 # Bernardo
 from plots import plots_fr_pointnet2
@@ -49,15 +50,15 @@ parser.add_argument('--model', default='pointnet2_cls_ssg_angmargin', help='Mode
 parser.add_argument('--log_dir', default='', help='Log dir [default: log]')
 # parser.add_argument('--num_point', type=int, default=1024, help='Point Number [default: 1024]')    # original
 parser.add_argument('--num_point', type=int, default=2900, help='Point Number [default: 1024]')      # Bernardo
-parser.add_argument('--max_epoch', type=int, default=100, help='Epoch to run [default: 251]')
+parser.add_argument('--max_epoch', type=int, default=50, help='Epoch to run [default: 251]')
 parser.add_argument('--batch_size', type=int, default=32, help='Batch Size during training [default: 16]')  # original
 # parser.add_argument('--batch_size', type=int, default=8, help='Batch Size during training [default: 32]')    # Bernardo
-parser.add_argument('--learning_rate', type=float, default=5e-05, help='Initial learning rate [default: 0.001]')
+parser.add_argument('--learning_rate', type=float, default=5e-04, help='Initial learning rate [default: 0.001]')
 parser.add_argument('--momentum', type=float, default=0.9, help='Initial learning rate [default: 0.9]')
 parser.add_argument('--optimizer', default='adam', help='adam or momentum [default: adam]')
 parser.add_argument('--decay_step', type=int, default=200000, help='Decay step for lr decay [default: 200000]')
 parser.add_argument('--decay_rate', type=float, default=0.7, help='Decay rate for lr decay [default: 0.7]')
-parser.add_argument('--margin_arc', type=float, default=0.0, help='Margin m for ArcFace')
+parser.add_argument('--margin_arc', type=float, default=0.1, help='Margin m for ArcFace')
 parser.add_argument('--scale_arc', type=float, default=32, help='Scale s for ArcFace')
 
 # parser.add_argument('--normal', action='store_true', help='Whether to use normal information')     # original
@@ -77,6 +78,7 @@ parser.add_argument('--normal', type=bool, default=False, help='Whether to use n
 # parser.add_argument('--dataset', type=str, default='reconst_mica_webface_2000subj', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_webface_5000subj', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_webface_10000subj', help='Name of dataset to train model')   # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_hrn_ms1mv3_reduced', help='Name of dataset to train model')   # Bernardo
 parser.add_argument('--dataset', type=str, default='reconst_hrn_ms1mv3_1000subj', help='Name of dataset to train model')   # Bernardo
 
 FLAGS = parser.parse_args()
@@ -253,6 +255,14 @@ elif FLAGS.dataset.upper() == 'reconst_mica_webface_10000subj'.upper():
     print('Loading test data...')
     TEST_DATASET  = webface_3Dreconstructed_MICA_dataset.WEBFACE_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
+elif FLAGS.dataset.upper() == 'reconst_hrn_ms1mv3_reduced'.upper():
+    min_samples, max_samples = 2, -1
+    DATA_PATH = os.path.join('/datasets1/bjgbiesseck/MS-Celeb-1M/ms1m-retinaface-t1/3D_reconstruction/HRN/images_reduced')  # duo
+    print('Loading train data...')
+    TRAIN_DATASET = ms1mv3_3Dreconstructed_HRN_dataset.MS1MV3_3D_Reconstructed_HRN_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    print('Loading test data...')
+    TEST_DATASET  = ms1mv3_3Dreconstructed_HRN_dataset.MS1MV3_3D_Reconstructed_HRN_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+
 elif FLAGS.dataset.upper() == 'reconst_hrn_ms1mv3_1000subj'.upper():
     min_samples, max_samples = 2, -1
     DATA_PATH = os.path.join('/datasets1/bjgbiesseck/MS-Celeb-1M/ms1m-retinaface-t1/3D_reconstruction/HRN/images1000subj')  # duo
@@ -313,7 +323,7 @@ def train():
 
             # Get model and loss 
             # pred, end_points = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=bn_decay)                         # original
-            embd, logits, end_points, weights_fc3 = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=bn_decay, num_class=NUM_CLASSES)    # Bernardo
+            interm_layers, embd, logits, end_points, weights_fc3 = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=bn_decay, num_class=NUM_CLASSES)    # Bernardo
             logits, loss, classify_loss = MODEL.get_loss_arcface(logits, labels_pl, end_points, weights_fc3, TRAIN_DATASET.num_classes, FLAGS.margin_arc, float(FLAGS.scale_arc))
             # pred = embds   # TESTE
             # pred, loss, classify_loss = MODEL.get_loss_common_cross_entropy(embd, labels_pl, end_points, weights_fc3, TRAIN_DATASET.num_classes)
@@ -361,6 +371,7 @@ def train():
         ops = {'pointclouds_pl': pointclouds_pl,
                'labels_pl': labels_pl,
                'is_training_pl': is_training_pl,
+               'interm_layers': interm_layers,
                'logits': logits,
                'loss': total_loss,
                'train_op': train_op,
@@ -379,12 +390,12 @@ def train():
             #     train_one_epoch(sess, ops, train_writer)
 
             # Modified to reduce time when training with 10,000 classes
-            loss_sum, train_mean_loss, train_accuracy, train_avg_class_acc = train_one_epoch(sess, ops, train_writer)
+            loss_sum, train_mean_loss, train_accuracy, train_avg_class_acc = train_one_epoch(epoch, sess, ops, train_writer)
 
             # train_one_epoch(sess, ops, train_writer)
             # eval_one_epoch(sess, ops, test_writer)
             # loss_sum, train_mean_loss, train_accuracy, train_avg_class_acc = eval_train_one_epoch(sess, ops, train_writer)   # Commented to reduce time when training with 10,000 classes
-            loss_sum, test_mean_loss, test_accuracy, test_avg_class_acc = eval_test_one_epoch(sess, ops, test_writer)
+            loss_sum, test_mean_loss, test_accuracy, test_avg_class_acc = eval_test_one_epoch(epoch, sess, ops, test_writer)
             log_string('')
 
             if train_mean_loss < BEST_MEAN_LOSS:
@@ -406,11 +417,36 @@ def train():
             EPOCH_CNT += 1
 
 
+def save_samples(path_save, batch_data, out_layer1_l1_xyz, out_layer2_l2_xyz, out_layer3_l3_xyz):
+    os.makedirs(path_save, exist_ok=True)
+    # print(f'batch_data.shape: {batch_data.shape}')
+    # print(f'out_layer1_l1_xyz.shape: {out_layer1_l1_xyz.shape}')
+    # print(f'out_layer2_l2_xyz.shape: {out_layer2_l2_xyz.shape}')
+    # print(f'out_layer3_l3_xyz.shape: {out_layer3_l3_xyz.shape}')
 
-def train_one_epoch(sess, ops, train_writer):
+    for i in range(batch_data.shape[0]):
+        print(f'Saving sample {i}/{batch_data.shape[0]-1}', end='\r')
+
+        path_input_pc = os.path.join(path_save, f'sample{i}_input_pc.obj')
+        write_obj(path_input_pc, batch_data[i])
+
+        path_out_layer1_l1_xyz = os.path.join(path_save, f'sample{i}_out_layer1_l1_xyz.obj')
+        write_obj(path_out_layer1_l1_xyz, out_layer1_l1_xyz[i])
+
+        path_out_layer2_l2_xyz = os.path.join(path_save, f'sample{i}_out_layer2_l2_xyz.obj')
+        write_obj(path_out_layer2_l2_xyz, out_layer2_l2_xyz[i])
+
+        path_out_layer3_l3_xyz = os.path.join(path_save, f'sample{i}_out_layer3_l3_xyz.obj')
+        write_obj(path_out_layer3_l3_xyz, out_layer3_l3_xyz[i])
+
+    print('')
+    # sys.exit(0)
+
+
+def train_one_epoch(epoch, sess, ops, train_writer):
     """ ops: dict mapping from string to tf ops """
     is_training = True
-    
+
     log_string(str(datetime.now()))
 
     # Make sure batch data is of same size
@@ -433,7 +469,7 @@ def train_one_epoch(sess, ops, train_writer):
 
         # batch_data, batch_label = TRAIN_DATASET.next_batch(augment=True)   # original
         batch_data, batch_label = TRAIN_DATASET.next_batch(augment=False)    # Bernardo
-        
+
         #batch_data = provider.random_point_dropout(batch_data)
         bsize = batch_data.shape[0]
         cur_batch_data[0:bsize,...] = batch_data
@@ -442,26 +478,30 @@ def train_one_epoch(sess, ops, train_writer):
         feed_dict = {ops['pointclouds_pl']: cur_batch_data,
                      ops['labels_pl']: cur_batch_label,
                      ops['is_training_pl']: is_training,}
-        summary, step, _, loss_val, pred_val = sess.run([ops['merged'], ops['step'],
-            ops['train_op'], ops['loss'], ops['logits']], feed_dict=feed_dict)
+        summary, step, _, loss_val, pred_val, \
+            out_layer1_l1_xyz, out_layer2_l2_xyz, out_layer3_l3_xyz = sess.run([ops['merged'], ops['step'],
+                                                                                ops['train_op'], ops['loss'], ops['logits'],
+                                                                                ops['interm_layers']['layer1']['l1_xyz'],
+                                                                                ops['interm_layers']['layer2']['l2_xyz'],
+                                                                                ops['interm_layers']['layer3']['l3_xyz']], feed_dict=feed_dict)
         train_writer.add_summary(summary, step)
         pred_val = np.argmax(pred_val, 1)
         correct = np.sum(pred_val[0:bsize] == batch_label[0:bsize])
         total_correct += correct
         total_seen += bsize
         loss_sum += loss_val
-        # if (batch_idx+1)%50 == 0:
-        #     log_string(' ---- batch: %03d ----' % (batch_idx+1))
-        #     log_string('mean loss: %f' % (loss_sum / 50))
-        #     log_string('accuracy: %f' % (total_correct / float(total_seen)))
-        #     total_correct = 0
-        #     total_seen = 0
-        #     loss_sum = 0
-        batch_idx += 1
+        
         for i in range(0, bsize):
             l = batch_label[i]
             total_seen_class[l] += 1
             total_correct_class[l] += (pred_val[i] == l)
+
+        if epoch % 10 == 0 and batch_idx == 0:
+            dir_samples = f'train_samples/epoch{epoch}/batch{batch_idx}'
+            path_save = os.path.join(LOG_DIR, dir_samples)
+            save_samples(path_save, batch_data, out_layer1_l1_xyz, out_layer2_l2_xyz, out_layer3_l3_xyz)
+
+        batch_idx += 1
 
     print('')
 
@@ -478,7 +518,7 @@ def train_one_epoch(sess, ops, train_writer):
 
 
 
-def eval_train_one_epoch(sess, ops, test_writer):
+def eval_train_one_epoch(epoch, sess, ops, test_writer):
     """ ops: dict mapping from string to tf ops """
     global EPOCH_CNT
     is_training = False
@@ -541,7 +581,7 @@ def eval_train_one_epoch(sess, ops, test_writer):
 
 
 
-def eval_test_one_epoch(sess, ops, test_writer):
+def eval_test_one_epoch(epoch, sess, ops, test_writer):
     """ ops: dict mapping from string to tf ops """
     global EPOCH_CNT
     is_training = False
@@ -576,8 +616,15 @@ def eval_test_one_epoch(sess, ops, test_writer):
                      ops['labels_pl']: cur_batch_label,
                      ops['is_training_pl']: is_training}
 
-        summary, step, loss_val, pred_val = sess.run([ops['merged'], ops['step'],
-            ops['loss'], ops['logits']], feed_dict=feed_dict)
+        # summary, step, loss_val, pred_val = sess.run([ops['merged'], ops['step'],
+        #     ops['loss'], ops['logits']], feed_dict=feed_dict)
+        summary, step, loss_val, pred_val, \
+            out_layer1_l1_xyz, out_layer2_l2_xyz, out_layer3_l3_xyz = sess.run([ops['merged'], ops['step'],
+                                                                                ops['loss'], ops['logits'],
+                                                                                ops['interm_layers']['layer1']['l1_xyz'],
+                                                                                ops['interm_layers']['layer2']['l2_xyz'],
+                                                                                ops['interm_layers']['layer3']['l3_xyz']], feed_dict=feed_dict)
+        
             
         test_writer.add_summary(summary, step)
         pred_val = np.argmax(pred_val, 1)
@@ -585,11 +632,18 @@ def eval_test_one_epoch(sess, ops, test_writer):
         total_correct += correct
         total_seen += bsize
         loss_sum += loss_val
-        batch_idx += 1
+        
         for i in range(0, bsize):
             l = batch_label[i]
             total_seen_class[l] += 1
             total_correct_class[l] += (pred_val[i] == l)
+
+        if epoch % 10 == 0 and batch_idx == 0:
+            dir_samples = f'test_samples/epoch{epoch}/batch{batch_idx}'
+            path_save = os.path.join(LOG_DIR, dir_samples)
+            save_samples(path_save, batch_data, out_layer1_l1_xyz, out_layer2_l2_xyz, out_layer3_l3_xyz)
+
+        batch_idx += 1
     
     test_mean_loss = loss_sum / float(batch_idx)
     test_accuracy = total_correct / float(total_seen)

@@ -28,6 +28,7 @@ import provider
 from data_loader.loader_reconstructed_MICA import lfw_evaluation_3Dreconstructed_MICA_dataset_pairs      # Bernardo
 from data_loader.loader_reconstructed_MICA import magVerif_pairs_3Dreconstructed_MICA                    # Bernardo
 from data_loader.loader_reconstructed_MICA import calfw_evaluation_3Dreconstructed_MICA_dataset_pairs    # Bernardo
+from data_loader.loader_reconstructed_HRN import magVerif_pairs_3Dreconstructed_HRN
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 0]')
@@ -57,15 +58,18 @@ parser.add_argument('--dump_dir', default='dump', help='dump folder path [dump]'
 # parser.add_argument('--normal', action='store_true', help='Whether to use normal information')      # original
 parser.add_argument('--normal', type=bool, default=False, help='Whether to use normal information')   # Bernardo
 parser.add_argument('--num_votes', type=int, default=1, help='Aggregate classification scores from multiple rotations [default: 1]')
-parser.add_argument('--margin', type=float, default=0.5, help='Minimum distance for non-corresponding pairs in Contrastive Loss')
+parser.add_argument('--margin', type=float, default=0.1, help='Minimum distance for non-corresponding pairs in Contrastive Loss')
 
 # parser.add_argument('--dataset', type=str, default='frgc', help='Name of dataset to train model')                 # Bernardo
 # parser.add_argument('--dataset', type=str, default='synthetic_gpmm', help='Name of dataset to train model')       # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_ms1mv2', help='Name of dataset to train model')  # Bernardo
-parser.add_argument('--dataset', type=str, default='reconst_mica_lfw', help='Name of dataset to train model')       # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_mica_lfw', help='Name of dataset to train model')     # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_agedb', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_cfp', help='Name of dataset to train model')     # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_calfw', help='Name of dataset to train model')   # Bernardo
+parser.add_argument('--dataset', type=str, default='reconst_hrn_lfw', help='Name of dataset to train model')        # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_hrn_agedb', help='Name of dataset to train model')    # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_hrn_cfp', help='Name of dataset to train model')      # Bernardo
 
 FLAGS = parser.parse_args()
 
@@ -109,6 +113,22 @@ elif FLAGS.dataset.upper() == 'reconst_mica_cfp'.upper():
 elif FLAGS.dataset.upper() == 'reconst_mica_calfw'.upper():
     DATA_PATH = os.path.join(ROOT_DIR, '../../BOVIFOCR_MICA_3Dreconstruction/demo/output/calfw')
     EVAL_DATASET = calfw_evaluation_3Dreconstructed_MICA_dataset_pairs.CALFW_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+
+elif FLAGS.dataset.upper() == 'reconst_hrn_lfw'.upper():
+    DATA_PATH = '/datasets1/bjgbiesseck/lfw_cfp_agedb/3D_reconstruction_HRN/lfw/imgs'                 # duo
+    protocol_file_path = '/datasets1/bjgbiesseck/lfw_cfp_agedb/rgb/lfw/pair.list'                     # duo
+    EVAL_DATASET = magVerif_pairs_3Dreconstructed_HRN.MAGFACE_Evaluation_3D_Reconstructed_HRN_Dataset_Pairs(root=DATA_PATH, protocol_file_path=protocol_file_path, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+
+elif FLAGS.dataset.upper() == 'reconst_hrn_agedb'.upper():
+    DATA_PATH = '/datasets1/bjgbiesseck/lfw_cfp_agedb/3D_reconstruction_HRN/agedb/imgs'               # duo
+    protocol_file_path = '/datasets1/bjgbiesseck/lfw_cfp_agedb/rgb/agedb/pair.list'                   # duo
+    EVAL_DATASET = magVerif_pairs_3Dreconstructed_HRN.MAGFACE_Evaluation_3D_Reconstructed_HRN_Dataset_Pairs(root=DATA_PATH, protocol_file_path=protocol_file_path, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+
+elif FLAGS.dataset.upper() == 'reconst_hrn_cfp'.upper():
+    DATA_PATH = '/datasets1/bjgbiesseck/lfw_cfp_agedb/3D_reconstruction_HRN/cfp/imgs'                 # duo
+    protocol_file_path = '/datasets1/bjgbiesseck/lfw_cfp_agedb/rgb/cfp/pair.list'                     # duo
+    EVAL_DATASET = magVerif_pairs_3Dreconstructed_HRN.MAGFACE_Evaluation_3D_Reconstructed_HRN_Dataset_Pairs(root=DATA_PATH, protocol_file_path=protocol_file_path, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+
 
 
 
@@ -444,24 +464,15 @@ def evaluate_varying_margin(num_votes):
         pointclouds_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE, NUM_POINT)
         is_training_pl = tf.placeholder(tf.bool, shape=())
 
-        '''
-        # simple model
-        # pred, end_points = MODEL.get_model(pointclouds_pl, is_training_pl)
-        embd, end_points, weights_fc3 = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=None, num_class=NUM_CLASSES)    # Bernardo
-
-        # MODEL.get_loss(pred, labels_pl, end_points)
-        embds, pred, loss, classify_loss = MODEL.get_loss_arcface(embd, labels_pl, end_points, weights_fc3, num_classes=NUM_CLASSES)
-        '''
-
-        embd, logits, end_points, weights_fc3 = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=None, num_class=NUM_CLASSES)    # Bernardo
+        interm_layers, embd, logits, end_points, weights_fc3 = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=None, num_class=NUM_CLASSES)    # Bernardo
         logits, loss, classify_loss = MODEL.get_loss_arcface(logits, labels_pl, end_points, weights_fc3, num_classes=NUM_CLASSES)
 
         losses = tf.get_collection('losses')
         total_loss = tf.add_n(losses, name='total_loss')
-        
+
         # Add ops to save and restore all the variables.
         saver = tf.train.Saver()
-        
+
     # Create a session
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
