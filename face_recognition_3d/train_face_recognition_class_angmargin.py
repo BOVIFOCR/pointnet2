@@ -15,6 +15,7 @@ import socket
 import importlib
 import os
 import sys
+import ast
 THIS_FILE_NAME = os.path.basename(__file__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = BASE_DIR
@@ -36,6 +37,8 @@ from data_loader.loader_synthetic_faces_gpmm import synthetic_faces_gpmm_dataset
 from data_loader.loader_reconstructed_MICA import lfw_3Dreconstructed_MICA_dataset         # Bernardo
 from data_loader.loader_reconstructed_MICA import ms1mv2_3Dreconstructed_MICA_dataset      # Bernardo
 from data_loader.loader_reconstructed_MICA import webface_3Dreconstructed_MICA_dataset     # Bernardo
+from data_loader.loader_reconstructed_MICA import casia_3Dreconstructed_MICA_dataset       # Bernardo
+from data_loader.loader_reconstructed_MICA import ffhq_3Dreconstructed_MICA_dataset        # Bernardo
 from data_loader.loader_reconstructed_HRN import ms1mv3_3Dreconstructed_HRN_dataset        # Bernardo
 
 
@@ -79,9 +82,12 @@ parser.add_argument('--normal', type=bool, default=False, help='Whether to use n
 # parser.add_argument('--dataset', type=str, default='reconst_mica_webface_5000subj', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_webface_10000subj', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_hrn_ms1mv3_reduced', help='Name of dataset to train model')   # Bernardo
-parser.add_argument('--dataset', type=str, default='reconst_hrn_ms1mv3_1000subj', help='Name of dataset to train model')   # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_hrn_ms1mv3_1000subj', help='Name of dataset to train model')   # Bernardo
+parser.add_argument('--dataset', type=str, default='[\'mica_casia\',\'mica_ffhq\']', help='Name of dataset to train model')   # Bernardo
 
 FLAGS = parser.parse_args()
+if FLAGS.dataset.startswith('[') and FLAGS.dataset.endswith(']'):
+    FLAGS.dataset = ast.literal_eval(FLAGS.dataset)
 print('FLAGS:', FLAGS)
 
 EPOCH_CNT = 0
@@ -101,7 +107,7 @@ MODEL_FILE = os.path.join(ROOT_DIR, '../models', FLAGS.model+'.py')
 
 if FLAGS.log_dir == '':
     # classes=5000_backbone=resnet_v2_m_50_epoch-num=100_loss=arcface_s=64.0_m=0.5_moment=0.9_batch=64_lr-init=0.1_20230518-214716
-    FLAGS.log_dir += 'dataset=' + str(FLAGS.dataset)
+    FLAGS.log_dir += 'dataset=' + str(FLAGS.dataset).replace(' ', '').replace('\'', '')
     FLAGS.log_dir += '_model=' + str(FLAGS.model)
     FLAGS.log_dir += '_max_epoch=' + str(FLAGS.max_epoch)
     FLAGS.log_dir += '_lr-init=' + str(FLAGS.learning_rate)
@@ -133,144 +139,174 @@ HOSTNAME = socket.gethostname()
 BEST_MEAN_LOSS = float('inf')
 BEST_ACC = float('-inf')
 
+if type(FLAGS.dataset) == str:
+    if FLAGS.dataset.upper() == 'frgc'.upper() or FLAGS.dataset.upper() == 'frgcv2'.upper():
+        DATA_PATH = os.path.join(ROOT_DIR, '../data/FRGCv2.0/FRGC-2.0-dist')
+        TRAIN_DATASET = frgc2_dataset.FRGCv2_Dataset(root=DATA_PATH, npoints=NUM_POINT, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+        TEST_DATASET  = frgc2_dataset.FRGCv2_Dataset(root=DATA_PATH, npoints=NUM_POINT, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
-if FLAGS.dataset.upper() == 'frgc'.upper() or FLAGS.dataset.upper() == 'frgcv2'.upper():
-    DATA_PATH = os.path.join(ROOT_DIR, '../data/FRGCv2.0/FRGC-2.0-dist')
-    TRAIN_DATASET = frgc2_dataset.FRGCv2_Dataset(root=DATA_PATH, npoints=NUM_POINT, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
-    TEST_DATASET  = frgc2_dataset.FRGCv2_Dataset(root=DATA_PATH, npoints=NUM_POINT, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    elif FLAGS.dataset.upper() == 'synthetic_gpmm'.upper():
+        DATA_PATH = os.path.join(ROOT_DIR, '../../3DFacePointCloudNet/Data/TrainData')
+        n_classes = 100
+        n_expressions = 10
+        TRAIN_DATASET = synthetic_faces_gpmm_dataset.SyntheticFacesGPMM_Dataset(root=DATA_PATH, npoints=NUM_POINT, num_classes=n_classes, num_expressions=n_expressions, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+        TEST_DATASET  = synthetic_faces_gpmm_dataset.SyntheticFacesGPMM_Dataset(root=DATA_PATH, npoints=NUM_POINT, num_classes=n_classes, num_expressions=n_expressions, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
-elif FLAGS.dataset.upper() == 'synthetic_gpmm'.upper():
-    DATA_PATH = os.path.join(ROOT_DIR, '../../3DFacePointCloudNet/Data/TrainData')
-    n_classes = 100
-    n_expressions = 10
-    TRAIN_DATASET = synthetic_faces_gpmm_dataset.SyntheticFacesGPMM_Dataset(root=DATA_PATH, npoints=NUM_POINT, num_classes=n_classes, num_expressions=n_expressions, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
-    TEST_DATASET  = synthetic_faces_gpmm_dataset.SyntheticFacesGPMM_Dataset(root=DATA_PATH, npoints=NUM_POINT, num_classes=n_classes, num_expressions=n_expressions, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    elif FLAGS.dataset.upper() == 'reconst_mica_lfw'.upper():
+        DATA_PATH = os.path.join(ROOT_DIR, '../../MICA/demo/output/lfw')
+        min_samples, max_samples = 3, -1
+        TRAIN_DATASET = lfw_3Dreconstructed_MICA_dataset.LFR_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+        TEST_DATASET  = lfw_3Dreconstructed_MICA_dataset.LFR_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
-elif FLAGS.dataset.upper() == 'reconst_mica_lfw'.upper():
-    DATA_PATH = os.path.join(ROOT_DIR, '../../MICA/demo/output/lfw')
-    
-    min_samples, max_samples = 3, -1
-    # min_samples, max_samples = 3, 3
-    # min_samples, max_samples = 10, 10
-    # min_samples, max_samples = 20, 20
-    # min_samples, max_samples = 50, 50
-    
-    TRAIN_DATASET = lfw_3Dreconstructed_MICA_dataset.LFR_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
-    TEST_DATASET  = lfw_3Dreconstructed_MICA_dataset.LFR_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2'.upper():
+        min_samples, max_samples = 2, -1
+        DATA_PATH = os.path.join(ROOT_DIR, '../../MICA/demo/output/MS-Celeb-1M/ms1m-retinaface-t1/images')
+        print('Loading train data...')
+        TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+        print('Loading test data...')
+        TEST_DATASET  = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
-elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2'.upper():
-    min_samples, max_samples = 2, -1
-    
-    DATA_PATH = os.path.join(ROOT_DIR, '../../MICA/demo/output/MS-Celeb-1M/ms1m-retinaface-t1/images')
-    print('Loading train data...')
-    TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
-    print('Loading test data...')
-    TEST_DATASET  = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_reduced'.upper():
+        min_samples, max_samples = 2, -1
+        DATA_PATH = os.path.join(ROOT_DIR, '/home/bjgbiesseck/GitHub/BOVIFOCR_pointnet2_tensorflow/face_recognition_3d/../../BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_22subj')
+        print('Loading train data...')
+        TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+        print('Loading test data...')
+        TEST_DATASET  = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
-elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_reduced'.upper():
-    min_samples, max_samples = 2, -1
-    DATA_PATH = os.path.join(ROOT_DIR, '/home/bjgbiesseck/GitHub/BOVIFOCR_pointnet2_tensorflow/face_recognition_3d/../../BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_22subj')
-    print('Loading train data...')
-    TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
-    print('Loading test data...')
-    TEST_DATASET  = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_1000subj'.upper():
+        min_samples, max_samples = 2, -1
+        DATA_PATH = os.path.join('/home/bjgbiesseck/GitHub/BOVIFOCR_pointnet2_tensorflow/face_recognition_3d/../../BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_1000subj')  # duo
+        # DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_1000subj')  # diolkos
+        # DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/MS-Celeb-1M_3D_reconstruction_originalMICA/images_1000subj')  # peixoto
+        print('Loading train data...')
+        TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+        print('Loading test data...')
+        TEST_DATASET  = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
-elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_1000subj'.upper():
-    min_samples, max_samples = 2, -1
-    DATA_PATH = os.path.join('/home/bjgbiesseck/GitHub/BOVIFOCR_pointnet2_tensorflow/face_recognition_3d/../../BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_1000subj')  # duo
-    # DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_1000subj')  # diolkos
-    # DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/MS-Celeb-1M_3D_reconstruction_originalMICA/images_1000subj')  # peixoto
-    print('Loading train data...')
-    TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
-    print('Loading test data...')
-    TEST_DATASET  = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_2000subj'.upper():
+        min_samples, max_samples = 2, -1
+        # DATA_PATH = os.path.join('/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_2000subj')  # duo
+        # DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_2000subj')  # diolkos
+        DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/MS-Celeb-1M_3D_reconstruction_originalMICA/images_2000subj')  # peixoto
+        print('Loading train data...')
+        TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+        print('Loading test data...')
+        TEST_DATASET  = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
-elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_2000subj'.upper():
-    min_samples, max_samples = 2, -1
-    # DATA_PATH = os.path.join('/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_2000subj')  # duo
-    # DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_2000subj')  # diolkos
-    DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/MS-Celeb-1M_3D_reconstruction_originalMICA/images_2000subj')  # peixoto
-    print('Loading train data...')
-    TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
-    print('Loading test data...')
-    TEST_DATASET  = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_5000subj'.upper():
+        min_samples, max_samples = 2, -1
+        DATA_PATH = os.path.join('/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_5000subj')  # duo
+        # DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_5000subj')  # diolkos
+        # DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/MS-Celeb-1M_3D_reconstruction_originalMICA/images_5000subj')  # peixoto
+        print('Loading train data...')
+        TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+        print('Loading test data...')
+        TEST_DATASET  = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
-elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_5000subj'.upper():
-    min_samples, max_samples = 2, -1
-    DATA_PATH = os.path.join('/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_5000subj')  # duo
-    # DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_5000subj')  # diolkos
-    # DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/MS-Celeb-1M_3D_reconstruction_originalMICA/images_5000subj')  # peixoto
-    print('Loading train data...')
-    TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
-    print('Loading test data...')
-    TEST_DATASET  = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_10000subj'.upper():
+        min_samples, max_samples = 2, -1
+        # DATA_PATH = os.path.join('/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_10000subj')  # duo
+        # DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_10000subj')  # diolkos
+        DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/MS-Celeb-1M_3D_reconstruction_originalMICA/images_10000subj')  # peixoto
+        print('Loading train data...')
+        TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+        print('Loading test data...')
+        TEST_DATASET  = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
-elif FLAGS.dataset.upper() == 'reconst_mica_ms1mv2_10000subj'.upper():
-    min_samples, max_samples = 2, -1
-    # DATA_PATH = os.path.join('/home/bjgbiesseck/GitHub/BOVIFOCR_MICA_3Dreconstruction/demo/output/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_10000subj')  # duo
-    # DATA_PATH = os.path.join('/home/bjgbiesseck/datasets/MS-Celeb-1M/MS-Celeb-1M_3D_reconstruction_originalMICA/ms1m-retinaface-t1/images_10000subj')  # diolkos
-    DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/MS-Celeb-1M_3D_reconstruction_originalMICA/images_10000subj')  # peixoto
-    print('Loading train data...')
-    TRAIN_DATASET = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
-    print('Loading test data...')
-    TEST_DATASET  = ms1mv2_3Dreconstructed_MICA_dataset.MS1MV2_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    elif FLAGS.dataset.upper() == 'reconst_mica_webface_1000subj'.upper():
+        min_samples, max_samples = 2, -1
+        # DATA_PATH = os.path.join('/datasets1/bjgbiesseck/WebFace260M/3D_reconstruction/images_1000subj')  # duo
+        DATA_PATH = os.path.join('/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/WebFace260M_3D_reconstruction_originalMICA/images_1000subj')  # diolkos
+        # DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/WebFace260M_3D_reconstruction_originalMICA/images_1000subj')  # peixoto
+        print('Loading train data...')
+        TRAIN_DATASET = webface_3Dreconstructed_MICA_dataset.WEBFACE_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+        print('Loading test data...')
+        TEST_DATASET  = webface_3Dreconstructed_MICA_dataset.WEBFACE_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
-elif FLAGS.dataset.upper() == 'reconst_mica_webface_1000subj'.upper():
-    min_samples, max_samples = 2, -1
-    # DATA_PATH = os.path.join('/datasets1/bjgbiesseck/WebFace260M/3D_reconstruction/images_1000subj')  # duo
-    DATA_PATH = os.path.join('/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/WebFace260M_3D_reconstruction_originalMICA/images_1000subj')  # diolkos
-    # DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/WebFace260M_3D_reconstruction_originalMICA/images_1000subj')  # peixoto
-    print('Loading train data...')
-    TRAIN_DATASET = webface_3Dreconstructed_MICA_dataset.WEBFACE_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
-    print('Loading test data...')
-    TEST_DATASET  = webface_3Dreconstructed_MICA_dataset.WEBFACE_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    elif FLAGS.dataset.upper() == 'reconst_mica_webface_2000subj'.upper():
+        min_samples, max_samples = 2, -1
+        # DATA_PATH = os.path.join('/datasets1/bjgbiesseck/WebFace260M/3D_reconstruction/images_2000subj')  # duo
+        DATA_PATH = os.path.join('/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/WebFace260M_3D_reconstruction_originalMICA/images_2000subj')  # diolkos
+        # DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/WebFace260M_3D_reconstruction_originalMICA/images_2000subj')  # peixoto
+        print('Loading train data...')
+        TRAIN_DATASET = webface_3Dreconstructed_MICA_dataset.WEBFACE_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+        print('Loading test data...')
+        TEST_DATASET  = webface_3Dreconstructed_MICA_dataset.WEBFACE_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
-elif FLAGS.dataset.upper() == 'reconst_mica_webface_2000subj'.upper():
-    min_samples, max_samples = 2, -1
-    # DATA_PATH = os.path.join('/datasets1/bjgbiesseck/WebFace260M/3D_reconstruction/images_2000subj')  # duo
-    DATA_PATH = os.path.join('/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/WebFace260M_3D_reconstruction_originalMICA/images_2000subj')  # diolkos
-    # DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/WebFace260M_3D_reconstruction_originalMICA/images_2000subj')  # peixoto
-    print('Loading train data...')
-    TRAIN_DATASET = webface_3Dreconstructed_MICA_dataset.WEBFACE_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
-    print('Loading test data...')
-    TEST_DATASET  = webface_3Dreconstructed_MICA_dataset.WEBFACE_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    elif FLAGS.dataset.upper() == 'reconst_mica_webface_5000subj'.upper():
+        min_samples, max_samples = 2, -1
+        # DATA_PATH = os.path.join('/datasets1/bjgbiesseck/WebFace260M/3D_reconstruction/images_5000subj')  # duo
+        DATA_PATH = os.path.join('/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/WebFace260M_3D_reconstruction_originalMICA/images_5000subj')  # diolkos
+        # DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/WebFace260M_3D_reconstruction_originalMICA/images_5000subj')  # peixoto
+        print('Loading train data...')
+        TRAIN_DATASET = webface_3Dreconstructed_MICA_dataset.WEBFACE_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+        print('Loading test data...')
+        TEST_DATASET  = webface_3Dreconstructed_MICA_dataset.WEBFACE_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
-elif FLAGS.dataset.upper() == 'reconst_mica_webface_5000subj'.upper():
-    min_samples, max_samples = 2, -1
-    # DATA_PATH = os.path.join('/datasets1/bjgbiesseck/WebFace260M/3D_reconstruction/images_5000subj')  # duo
-    DATA_PATH = os.path.join('/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/WebFace260M_3D_reconstruction_originalMICA/images_5000subj')  # diolkos
-    # DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/WebFace260M_3D_reconstruction_originalMICA/images_5000subj')  # peixoto
-    print('Loading train data...')
-    TRAIN_DATASET = webface_3Dreconstructed_MICA_dataset.WEBFACE_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
-    print('Loading test data...')
-    TEST_DATASET  = webface_3Dreconstructed_MICA_dataset.WEBFACE_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    elif FLAGS.dataset.upper() == 'reconst_mica_webface_10000subj'.upper():
+        min_samples, max_samples = 2, -1
+        # DATA_PATH = os.path.join('/datasets1/bjgbiesseck/WebFace260M/3D_reconstruction/images_10000subj')  # duo
+        DATA_PATH = os.path.join('/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/WebFace260M_3D_reconstruction_originalMICA/images_10000subj')  # diolkos
+        # DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/WebFace260M_3D_reconstruction_originalMICA/images_10000subj')  # peixoto
+        print('Loading train data...')
+        TRAIN_DATASET = webface_3Dreconstructed_MICA_dataset.WEBFACE_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+        print('Loading test data...')
+        TEST_DATASET  = webface_3Dreconstructed_MICA_dataset.WEBFACE_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
-elif FLAGS.dataset.upper() == 'reconst_mica_webface_10000subj'.upper():
-    min_samples, max_samples = 2, -1
-    # DATA_PATH = os.path.join('/datasets1/bjgbiesseck/WebFace260M/3D_reconstruction/images_10000subj')  # duo
-    DATA_PATH = os.path.join('/nobackup/unico/datasets/face_recognition/MICA_3Dreconstruction/WebFace260M_3D_reconstruction_originalMICA/images_10000subj')  # diolkos
-    # DATA_PATH = os.path.join('/nobackup1/bjgbiesseck/datasets/WebFace260M_3D_reconstruction_originalMICA/images_10000subj')  # peixoto
-    print('Loading train data...')
-    TRAIN_DATASET = webface_3Dreconstructed_MICA_dataset.WEBFACE_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
-    print('Loading test data...')
-    TEST_DATASET  = webface_3Dreconstructed_MICA_dataset.WEBFACE_3D_Reconstructed_MICA_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    elif FLAGS.dataset.upper() == 'reconst_hrn_ms1mv3_reduced'.upper():
+        min_samples, max_samples = 2, -1
+        DATA_PATH = os.path.join('/datasets1/bjgbiesseck/MS-Celeb-1M/ms1m-retinaface-t1/3D_reconstruction/HRN/images_reduced')  # duo
+        print('Loading train data...')
+        TRAIN_DATASET = ms1mv3_3Dreconstructed_HRN_dataset.MS1MV3_3D_Reconstructed_HRN_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+        print('Loading test data...')
+        TEST_DATASET  = ms1mv3_3Dreconstructed_HRN_dataset.MS1MV3_3D_Reconstructed_HRN_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
-elif FLAGS.dataset.upper() == 'reconst_hrn_ms1mv3_reduced'.upper():
-    min_samples, max_samples = 2, -1
-    DATA_PATH = os.path.join('/datasets1/bjgbiesseck/MS-Celeb-1M/ms1m-retinaface-t1/3D_reconstruction/HRN/images_reduced')  # duo
-    print('Loading train data...')
-    TRAIN_DATASET = ms1mv3_3Dreconstructed_HRN_dataset.MS1MV3_3D_Reconstructed_HRN_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
-    print('Loading test data...')
-    TEST_DATASET  = ms1mv3_3Dreconstructed_HRN_dataset.MS1MV3_3D_Reconstructed_HRN_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    elif FLAGS.dataset.upper() == 'reconst_hrn_ms1mv3_1000subj'.upper():
+        min_samples, max_samples = 2, -1
+        DATA_PATH = os.path.join('/datasets1/bjgbiesseck/MS-Celeb-1M/ms1m-retinaface-t1/3D_reconstruction/HRN/images1000subj')  # duo
+        print('Loading train data...')
+        TRAIN_DATASET = ms1mv3_3Dreconstructed_HRN_dataset.MS1MV3_3D_Reconstructed_HRN_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+        print('Loading test data...')
+        TEST_DATASET  = ms1mv3_3Dreconstructed_HRN_dataset.MS1MV3_3D_Reconstructed_HRN_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
-elif FLAGS.dataset.upper() == 'reconst_hrn_ms1mv3_1000subj'.upper():
-    min_samples, max_samples = 2, -1
-    DATA_PATH = os.path.join('/datasets1/bjgbiesseck/MS-Celeb-1M/ms1m-retinaface-t1/3D_reconstruction/HRN/images1000subj')  # duo
-    print('Loading train data...')
-    TRAIN_DATASET = ms1mv3_3Dreconstructed_HRN_dataset.MS1MV3_3D_Reconstructed_HRN_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
-    print('Loading test data...')
-    TEST_DATASET  = ms1mv3_3Dreconstructed_HRN_dataset.MS1MV3_3D_Reconstructed_HRN_Dataset(root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+    elif FLAGS.dataset.upper() == 'mica_casia'.upper():
+        min_samples, max_samples = -1, -1
+        TRAIN_DATASET, TEST_DATASET = None, None
+        DATA_PATH = '/datasets2/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/1_CASIA-WebFace/imgs_crops_112x112/output'  # duo
+        print(f'\nLoading train data: \'{FLAGS.dataset}\' ...')
+        TRAIN_DATASET = casia_3Dreconstructed_MICA_dataset.CASIA_3D_Reconstructed_MICA_Dataset(TRAIN_DATASET, root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+        print(f'Loading test data: \'{FLAGS.dataset}\' ...')
+        TEST_DATASET  = casia_3Dreconstructed_MICA_dataset.CASIA_3D_Reconstructed_MICA_Dataset(TEST_DATASET, root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
+    elif FLAGS.dataset.upper() == 'mica_ffhq'.upper():
+        min_samples, max_samples = -1, -1
+        TRAIN_DATASET, TEST_DATASET = None, None
+        DATA_PATH = '/datasets2/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/2_FFHQ/images_crops_112x112/output'  # duo
+        print(f'\nLoading train data: \'{FLAGS.dataset}\' ...')
+        TRAIN_DATASET = ffhq_3Dreconstructed_MICA_dataset.FFHQ_3D_Reconstructed_MICA_Dataset(TRAIN_DATASET, root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+        print(f'Loading test data: \'{FLAGS.dataset}\' ...')
+        TEST_DATASET  = ffhq_3Dreconstructed_MICA_dataset.FFHQ_3D_Reconstructed_MICA_Dataset(TEST_DATASET, root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+
+
+elif type(FLAGS.dataset) == list:
+    TRAIN_DATASET, TEST_DATASET = None, None
+    for i, dataset in enumerate(FLAGS.dataset):
+        if dataset.upper() == 'mica_casia'.upper():
+            min_samples, max_samples = -1, -1
+            DATA_PATH = '/datasets2/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/1_CASIA-WebFace/imgs_crops_112x112/output'  # duo
+            print(f'\nLoading train data: \'{dataset}\' ...')
+            TRAIN_DATASET = casia_3Dreconstructed_MICA_dataset.CASIA_3D_Reconstructed_MICA_Dataset(TRAIN_DATASET, root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+            print(f'Loading test data: \'{dataset}\' ...')
+            TEST_DATASET  = casia_3Dreconstructed_MICA_dataset.CASIA_3D_Reconstructed_MICA_Dataset(TEST_DATASET, root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+
+        elif dataset.upper() == 'mica_ffhq'.upper():
+            min_samples, max_samples = -1, -1
+            DATA_PATH = '/datasets2/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/2_FFHQ/images_crops_112x112/output'  # duo
+            print(f'\nLoading train data: \'{dataset}\' ...')
+            TRAIN_DATASET = ffhq_3Dreconstructed_MICA_dataset.FFHQ_3D_Reconstructed_MICA_Dataset(TRAIN_DATASET, root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+            print(f'Loading test data: \'{dataset}\' ...')
+            TEST_DATASET  = ffhq_3Dreconstructed_MICA_dataset.FFHQ_3D_Reconstructed_MICA_Dataset(TEST_DATASET, root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
 
 # Bernardo
