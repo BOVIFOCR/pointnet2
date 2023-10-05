@@ -346,6 +346,7 @@ def get_bn_decay(batch):
 def train():
     with tf.Graph().as_default():
         with tf.device('/gpu:'+str(GPU_INDEX)):
+            print('\nBuilding input tensors...')
             pointclouds_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE, NUM_POINT)
             is_training_pl = tf.placeholder(tf.bool, shape=())
             
@@ -358,8 +359,10 @@ def train():
             tf.summary.scalar('bn_decay', bn_decay)
 
             # Get model and loss 
+            print('Building backbone...')
             # pred, end_points = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=bn_decay)                         # original
             interm_layers, embd, logits, end_points, weights_fc3 = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=bn_decay, num_class=NUM_CLASSES)    # Bernardo
+            print('Building classification layer...')
             logits, loss, classify_loss = MODEL.get_loss_arcface(logits, labels_pl, end_points, weights_fc3, TRAIN_DATASET.num_classes, FLAGS.margin_arc, float(FLAGS.scale_arc))
             # pred = embds   # TESTE
             # pred, loss, classify_loss = MODEL.get_loss_common_cross_entropy(embd, labels_pl, end_points, weights_fc3, TRAIN_DATASET.num_classes)
@@ -401,8 +404,11 @@ def train():
         test_writer = tf.summary.FileWriter(os.path.join(LOG_DIR, 'test'), sess.graph)
 
         # Init variables
+        print('Initializing global variables...')
         init = tf.global_variables_initializer()
+        print('sess.run(init) --> Starting session...')
         sess.run(init)
+        print('    session started!')
 
         ops = {'pointclouds_pl': pointclouds_pl,
                'labels_pl': labels_pl,
@@ -426,6 +432,7 @@ def train():
             #     train_one_epoch(sess, ops, train_writer)
 
             # Modified to reduce time when training with 10,000 classes
+            print('Starting train_one_epoch...')
             loss_sum, train_mean_loss, train_accuracy, train_avg_class_acc = train_one_epoch(epoch, sess, ops, train_writer)
 
             # train_one_epoch(sess, ops, train_writer)
