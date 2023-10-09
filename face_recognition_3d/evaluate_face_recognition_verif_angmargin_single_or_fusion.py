@@ -19,7 +19,7 @@ import sys
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = BASE_DIR
 sys.path.append(BASE_DIR)
-sys.path.append(os.path.join(ROOT_DIR, '../models'))
+# sys.path.append(os.path.join(ROOT_DIR, '../models'))
 sys.path.append(os.path.join(ROOT_DIR, '../utils'))
 import provider
 # import modelnet_dataset
@@ -28,7 +28,8 @@ import provider
 from data_loader.loader_reconstructed_MICA import lfw_evaluation_3Dreconstructed_MICA_dataset_pairs      # Bernardo
 from data_loader.loader_reconstructed_MICA import magVerif_pairs_3Dreconstructed_MICA                    # Bernardo
 from data_loader.loader_reconstructed_MICA import calfw_evaluation_3Dreconstructed_MICA_dataset_pairs    # Bernardo
-from data_loader.loader_reconstructed_HRN import magVerif_pairs_3Dreconstructed_HRN
+from data_loader.loader_reconstructed_HRN import magVerif_pairs_3Dreconstructed_HRN                      # Bernardo
+from data_loader.loader_reconstructed_MICA import bupt_evaluation_3Dreconstructed_MICA_dataset_pairs     # Bernardo
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 0]')
@@ -67,13 +68,16 @@ parser.add_argument('--margin', type=float, default=0.1, help='Minimum distance 
 # parser.add_argument('--dataset', type=str, default='reconst_mica_agedb', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_cfp', help='Name of dataset to train model')     # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_mica_calfw', help='Name of dataset to train model')   # Bernardo
-parser.add_argument('--dataset', type=str, default='reconst_hrn_lfw', help='Name of dataset to train model')        # Bernardo
+# parser.add_argument('--dataset', type=str, default='reconst_hrn_lfw', help='Name of dataset to train model')      # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_hrn_agedb', help='Name of dataset to train model')    # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_hrn_cfp', help='Name of dataset to train model')      # Bernardo
+parser.add_argument('--dataset', type=str, default='reconst_mica_bupt', help='Name of dataset to train model')       # Bernardo
 
 # Only for fusion of 2D and 3D models
 parser.add_argument('--fusion', action='store_true')
 parser.add_argument('--arc_dists', type=str, default='/home/bjgbiesseck/GitHub/InsightFace-tensorflow/output/dataset=MS1MV3_1000subj_classes=1000_backbone=resnet-v2-m-50_epoch-num=100_margin=0.5_scale=64.0_lr=0.01_wd=0.0005_momentum=0.9_20230518-004011/lfw_distances_arcface=1000class_acc=0.94650.npy', help='')     # Bernardo
+
+parser.add_argument('--race_analysis', action='store_true')
 
 FLAGS = parser.parse_args()
 
@@ -87,7 +91,7 @@ GPU_INDEX = FLAGS.gpu
 MARGIN = FLAGS.margin
 ARCFACE_DISTANCES_FILE = FLAGS.arc_dists
 
-
+sys.path.append(os.path.join(ROOT_DIR, '/'.join(MODEL_PATH.split('/')[:-1])))
 MODEL = importlib.import_module(FLAGS.model) # import network module
 DUMP_DIR = FLAGS.dump_dir
 if not os.path.exists(DUMP_DIR): os.mkdir(DUMP_DIR)
@@ -134,6 +138,11 @@ elif FLAGS.dataset.upper() == 'reconst_hrn_cfp'.upper():
     DATA_PATH = '/datasets1/bjgbiesseck/lfw_cfp_agedb/3D_reconstruction_HRN/cfp/imgs'                 # duo
     protocol_file_path = '/datasets1/bjgbiesseck/lfw_cfp_agedb/rgb/cfp/pair.list'                     # duo
     EVAL_DATASET = magVerif_pairs_3Dreconstructed_HRN.MAGFACE_Evaluation_3D_Reconstructed_HRN_Dataset_Pairs(root=DATA_PATH, protocol_file_path=protocol_file_path, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+
+elif FLAGS.dataset.upper() == 'reconst_mica_bupt'.upper():
+    DATA_PATH = os.path.join(ROOT_DIR, '/datasets2/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/3_BUPT-BalancedFace/race_per_7000_crops_112x112/output')   # duo
+    protocol_file_path = '/datasets2/frcsyn_wacv2024/comparison_files/comparison_files/sub-tasks_1.1_1.2/bupt_comparison.txt'        # duo
+    EVAL_DATASET = bupt_evaluation_3Dreconstructed_MICA_dataset_pairs.BUPT_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, protocol_file_path=protocol_file_path, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
 
 
@@ -472,6 +481,8 @@ def evaluate_varying_margin(num_votes):
 
         interm_layers, embd, logits, end_points, weights_fc3 = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=None, num_class=NUM_CLASSES)    # Bernardo
         logits, loss, classify_loss = MODEL.get_loss_arcface(logits, labels_pl, end_points, weights_fc3, num_classes=NUM_CLASSES)
+        # embd, end_points, weights_fc3 = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=None, num_class=NUM_CLASSES)    # Bernardo
+        # embd, logits, loss, classify_loss = MODEL.get_loss_arcface(embd, labels_pl, end_points, weights_fc3, num_classes=NUM_CLASSES)
 
         losses = tf.get_collection('losses')
         total_loss = tf.add_n(losses, name='total_loss')

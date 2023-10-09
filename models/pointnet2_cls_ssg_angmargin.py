@@ -48,7 +48,7 @@ def get_model(point_cloud, is_training, bn_decay=None, num_class=0):
             interm_layers['layer2']['l2_indices'] = l2_indices
 
         with tf.variable_scope("pointnet_sa_module3") as scope:
-            l3_xyz, l3_points, l3_indices = pointnet_sa_module(l2_xyz, l2_points, npoint=None, radius=None, nsample=None, mlp=[256,512,1024], mlp2=None, group_all=True, is_training=is_training, bn_decay=bn_decay, scope='layer3')
+            l3_xyz, l3_points, l3_indices = pointnet_sa_module(l2_xyz, l2_points, npoint=None, radius=None, nsample=None, mlp=[256,512,512], mlp2=None, group_all=True, is_training=is_training, bn_decay=bn_decay, scope='layer3')
             interm_layers['layer3'] = {}
             interm_layers['layer3']['l3_xyz'] = l3_xyz
             interm_layers['layer3']['l3_points'] = l3_points
@@ -72,12 +72,12 @@ def get_model(point_cloud, is_training, bn_decay=None, num_class=0):
             net = tf_util_angmargin.dropout(net, keep_prob=0.5, is_training=is_training, scope='dp2')
         '''
         with tf.variable_scope("fully_connected3") as scope:
-            # net = tf_util.fully_connected(net, 40, activation_fn=None, scope='fc3')        # original
-            fc3_output, weights_fc3 = tf_util_angmargin.fully_connected(embed, num_class, activation_fn=None, scope='fc3')   # Bernardo
+            # net = tf_util.fully_connected(net, 40, activation_fn=None, scope='fc3')                                             # original
+            fc3_output, weights_fc3 = tf_util_angmargin.fully_connected(embed, num_class, activation_fn=tf.nn.relu, scope='fc3')  # Bernardo
 
         # Add one more layer to implement angular margin
         with tf.variable_scope("fully_connected4") as scope:
-            logits, weights_fc4 = tf_util_angmargin.fully_connected(fc3_output, num_class, activation_fn=None, scope='fc4')   # Bernardo
+            logits, weights_fc4 = tf_util_angmargin.fully_connected(fc3_output, num_class, activation_fn=None, scope='fc4')       # Bernardo
 
     # return net, end_points, weights_fc3
     return interm_layers, embed, logits, end_points, weights_fc4
