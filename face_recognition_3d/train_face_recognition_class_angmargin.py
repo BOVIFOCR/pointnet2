@@ -83,7 +83,8 @@ parser.add_argument('--normal', type=bool, default=False, help='Whether to use n
 # parser.add_argument('--dataset', type=str, default='reconst_mica_webface_10000subj', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_hrn_ms1mv3_reduced', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_hrn_ms1mv3_1000subj', help='Name of dataset to train model')   # Bernardo
-parser.add_argument('--dataset', type=str, default='[\'mica_casia\',\'mica_ffhq\']', help='Name of dataset to train model')   # Bernardo
+# parser.add_argument('--dataset', type=str, default='[\'mica_casia\',\'mica_ffhq\']', help='Name of dataset to train model')   # Bernardo
+parser.add_argument('--dataset', type=str, default='mica_casia_100class', help='Name of dataset to train model')   # Bernardo
 
 FLAGS = parser.parse_args()
 if FLAGS.dataset.startswith('[') and FLAGS.dataset.endswith(']'):
@@ -280,6 +281,15 @@ if type(FLAGS.dataset) == str:
         print(f'Loading test data: \'{FLAGS.dataset}\' ...')
         TEST_DATASET  = casia_3Dreconstructed_MICA_dataset.CASIA_3D_Reconstructed_MICA_Dataset(TEST_DATASET, root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
+    elif FLAGS.dataset.upper() == 'mica_casia_100class'.upper():
+        min_samples, max_samples = -1, -1
+        TRAIN_DATASET, TEST_DATASET = None, None
+        DATA_PATH = '/datasets2/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/1_CASIA-WebFace/output_100class'  # duo
+        print(f'\nLoading train data: \'{FLAGS.dataset}\' ...')
+        TRAIN_DATASET = casia_3Dreconstructed_MICA_dataset.CASIA_3D_Reconstructed_MICA_Dataset(TRAIN_DATASET, root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+        print(f'Loading test data: \'{FLAGS.dataset}\' ...')
+        TEST_DATASET  = casia_3Dreconstructed_MICA_dataset.CASIA_3D_Reconstructed_MICA_Dataset(TEST_DATASET, root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+
     elif FLAGS.dataset.upper() == 'mica_ffhq'.upper():
         min_samples, max_samples = -1, -1
         TRAIN_DATASET, TEST_DATASET = None, None
@@ -418,6 +428,7 @@ def train():
                'labels_pl': labels_pl,
                'is_training_pl': is_training_pl,
                'interm_layers': interm_layers,
+               'embd': embd,
                'logits': logits,
                'loss': total_loss,
                'train_op': train_op,
@@ -525,15 +536,15 @@ def train_one_epoch(epoch, sess, ops, train_writer):
         feed_dict = {ops['pointclouds_pl']: cur_batch_data,
                      ops['labels_pl']: cur_batch_label,
                      ops['is_training_pl']: is_training,}
-        summary, step, _, loss_val, pred_val, \
+        summary, step, _, loss_val, embd, logits, \
             out_layer1_l1_xyz, out_layer2_l2_xyz, out_layer3_l3_xyz = sess.run([ops['merged'], ops['step'],
-                                                                                ops['train_op'], ops['loss'], ops['logits'],
+                                                                                ops['train_op'], ops['loss'], ops['embd'], ops['logits'],
                                                                                 ops['interm_layers']['layer1']['l1_xyz'],
                                                                                 ops['interm_layers']['layer2']['l2_xyz'],
                                                                                 ops['interm_layers']['layer3']['l3_xyz']], feed_dict=feed_dict)
         train_writer.add_summary(summary, step)
-        pred_val = np.argmax(pred_val, 1)
-        correct = np.sum(pred_val[0:bsize] == batch_label[0:bsize])
+        logits = np.argmax(logits, 1)
+        correct = np.sum(logits[0:bsize] == batch_label[0:bsize])
         total_correct += correct
         total_seen += bsize
         loss_sum += loss_val
@@ -541,7 +552,7 @@ def train_one_epoch(epoch, sess, ops, train_writer):
         for i in range(0, bsize):
             l = batch_label[i]
             total_seen_class[l] += 1
-            total_correct_class[l] += (pred_val[i] == l)
+            total_correct_class[l] += (logits[i] == l)
 
         if epoch % 10 == 0 and batch_idx == 0:
             dir_samples = f'train_samples/epoch{epoch}/batch{batch_idx}'
