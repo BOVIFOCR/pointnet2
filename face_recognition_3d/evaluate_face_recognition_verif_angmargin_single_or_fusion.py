@@ -71,7 +71,11 @@ parser.add_argument('--margin', type=float, default=0.1, help='Minimum distance 
 # parser.add_argument('--dataset', type=str, default='reconst_hrn_lfw', help='Name of dataset to train model')      # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_hrn_agedb', help='Name of dataset to train model')    # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_hrn_cfp', help='Name of dataset to train model')      # Bernardo
-parser.add_argument('--dataset', type=str, default='reconst_mica_bupt', help='Name of dataset to train model')       # Bernardo
+parser.add_argument('--dataset', type=str, default='reconst_mica_bupt', help='Name of dataset to train model')      # Bernardo
+
+parser.add_argument('--save_dist', action='store_true')              # Bernardo
+parser.add_argument('--load_dist', type=str, default='', help='')    # Bernardo
+parser.add_argument('--load_label', type=str, default='', help='')    # Bernardo
 
 # Only for fusion of 2D and 3D models
 parser.add_argument('--fusion', action='store_true')
@@ -140,8 +144,10 @@ elif FLAGS.dataset.upper() == 'reconst_hrn_cfp'.upper():
     EVAL_DATASET = magVerif_pairs_3Dreconstructed_HRN.MAGFACE_Evaluation_3D_Reconstructed_HRN_Dataset_Pairs(root=DATA_PATH, protocol_file_path=protocol_file_path, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
 elif FLAGS.dataset.upper() == 'reconst_mica_bupt'.upper():
-    DATA_PATH = os.path.join(ROOT_DIR, '/datasets2/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/3_BUPT-BalancedFace/race_per_7000_crops_112x112/output')   # duo
-    protocol_file_path = '/datasets2/frcsyn_wacv2024/comparison_files/comparison_files/sub-tasks_1.1_1.2/bupt_comparison.txt'        # duo
+    # DATA_PATH = os.path.join(ROOT_DIR, '/datasets2/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/3_BUPT-BalancedFace/race_per_7000_crops_112x112/output')   # duo
+    # protocol_file_path = '/datasets2/frcsyn_wacv2024/comparison_files/comparison_files/sub-tasks_1.1_1.2/bupt_comparison.txt'        # duo
+    DATA_PATH = os.path.join(ROOT_DIR, '/groups/unico/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/3_BUPT-BalancedFace/race_per_7000_crops_112x112/output')   # daugman
+    protocol_file_path = '/groups/unico/frcsyn_wacv2024/comparison_files/comparison_files/sub-tasks_1.1_1.2/bupt_comparison.txt'                                      # daugman
     EVAL_DATASET = bupt_evaluation_3Dreconstructed_MICA_dataset_pairs.BUPT_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, protocol_file_path=protocol_file_path, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
 
@@ -448,6 +454,68 @@ def calculate_tar(thresholds, dist, actual_issame, far_target, nrof_folds=10, ve
         return tar_mean, tar_std, far_mean, ta_idx, fa_idx
 
 
+def get_fnmr_fmr_analyze_races(threshold, dist, actual_issame, races_list, subj_list, races_combs):
+    predict_issame = np.less(dist, threshold)
+    tp = np.sum(np.logical_and(predict_issame, actual_issame))
+    fp = np.sum(np.logical_and(predict_issame, np.logical_not(actual_issame)))
+    tn = np.sum(np.logical_and(np.logical_not(predict_issame), np.logical_not(actual_issame)))
+    fn = np.sum(np.logical_and(np.logical_not(predict_issame), actual_issame))
+
+    fnmr = 0 if (fn + tp == 0) else float(fn) / float(fn + tp)
+    fmr = 0  if (fp + tn == 0) else float(fp) / float(fp + tn)
+
+    return fnmr, fmr
+
+
+def calculate_fnmr_fmr_analyze_races(thresholds,
+                                    dist,
+                                    actual_issame,
+                                    fmr_targets,
+                                    nrof_folds=10,
+                                    verbose=True):
+    # assert (embeddings1.shape[0] == embeddings2.shape[0])
+    # assert (embeddings1.shape[1] == embeddings2.shape[1])
+    nrof_pairs = min(len(actual_issame), dist.shape[0])
+    nrof_thresholds = len(thresholds)
+    k_fold = LFold(n_splits=nrof_folds, shuffle=False)
+
+    fnmr = {}
+    for fmr_target in fmr_targets:
+        fnmr[fmr_target] = np.zeros(nrof_folds)
+    fmr = np.zeros(nrof_folds)
+
+    # diff = np.subtract(embeddings1, embeddings2)
+    # dist = np.sum(np.square(diff), 1)
+    indices = np.arange(nrof_pairs)
+    metrics_races = [None] * nrof_folds
+
+    for fold_idx, (train_set, test_set) in enumerate(k_fold.split(indices)):
+        if verbose:
+            print('calculate_fnmr_fmr - fold_idx: '+str(fold_idx)+'/'+str(nrof_folds-1), end='\r')
+
+        # Find the threshold that gives FMR = fmr_target
+        fmr_train = np.zeros(nrof_thresholds)
+        for threshold_idx, threshold in enumerate(thresholds):
+            _, fmr_train[threshold_idx] = get_fnmr_fmr_analyze_races(
+                threshold, dist[train_set], actual_issame[train_set], races_list=None, subj_list=None, races_combs=None)
+
+        f = interpolate.interp1d(fmr_train, thresholds, kind='slinear')
+        for fmr_target in fmr_targets:
+            threshold = f(fmr_target)
+            fnmr[fmr_target][fold_idx], fmr[fold_idx] = get_fnmr_fmr_analyze_races(
+                threshold, dist[test_set], actual_issame[test_set], races_list=None, subj_list=None, races_combs=None)
+
+    if verbose:
+        print('')
+
+    fnmr_mean, fnmr_std = {}, {}
+    for fmr_target in fmr_targets:
+        fnmr_mean[fmr_target] = np.mean(fnmr[fmr_target])
+        fnmr_std[fmr_target] = np.std(fnmr[fmr_target])
+    fmr_mean = np.mean(fmr)
+    return fnmr_mean, fnmr_std, fmr_mean
+
+
 def do_k_fold_test(folds_pair_distances, folds_pair_labels, verbose=True):
         thresholds = np.arange(0, 4, 0.01)
         # tpr, fpr, accuracy = self.calculate_roc(thresholds, folds_pair_distances, folds_pair_labels, nrof_folds=10, verbose=verbose)
@@ -463,59 +531,87 @@ def do_k_fold_test(folds_pair_distances, folds_pair_labels, verbose=True):
         # print('ta_idx.shape:', ta_idx.shape)
         # print('fa_idx.shape:', fa_idx.shape)
 
+        thresholds = np.arange(0, 4, 0.0001)
+        fmr_targets = [1e-2, 1e-3, 1e-4]
+        fnmr_mean, fnmr_std, fmr_mean = calculate_fnmr_fmr_analyze_races(thresholds,
+                                                    folds_pair_distances,
+                                                    folds_pair_labels,
+                                                    fmr_targets,
+                                                    nrof_folds=10,
+                                                    verbose=verbose)
+
         if verbose:
             print('------------')
 
         # return tpr, fpr, accuracy, tar_mean, tar_std, far_mean
-        return tpr, fpr, accuracy, tar_mean, tar_std, far_mean, \
+        return tpr, fpr, accuracy, tar_mean, tar_std, far_mean, fnmr_mean, fnmr_std, fmr_mean, \
             tp_idx, fp_idx, tn_idx, fn_idx, ta_idx, fa_idx
 
 
 # Bernardo
-def evaluate_varying_margin(num_votes):
-    is_training = False
+def evaluate_varying_margin(FLAGS):
+    
+    if FLAGS.load_dist != '' and os.path.isfile(FLAGS.load_dist) and FLAGS.load_label != '' and os.path.isfile(FLAGS.load_label):
+        print(f'\nPointNet++ (3D) - Loading saved distances from \'{FLAGS.load_dist}\'...')
+        all_distances_pointnet2 = np.load(FLAGS.load_dist)
+        print(f'\nPointNet++ (3D) - Loading saved labels from \'{FLAGS.load_label}\'...\n')
+        pairs_labels = np.load(FLAGS.load_label)
 
-    with tf.device('/gpu:'+str(GPU_INDEX)):
-        pointclouds_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE, NUM_POINT)
-        is_training_pl = tf.placeholder(tf.bool, shape=())
+    else:
+        is_training = False
+        with tf.device('/gpu:'+str(GPU_INDEX)):
+            pointclouds_pl, labels_pl = MODEL.placeholder_inputs(BATCH_SIZE, NUM_POINT)
+            is_training_pl = tf.placeholder(tf.bool, shape=())
 
-        interm_layers, embd, logits, end_points, weights_fc3 = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=None, num_class=NUM_CLASSES)    # Bernardo
-        logits, loss, classify_loss = MODEL.get_loss_arcface(logits, labels_pl, end_points, weights_fc3, num_classes=NUM_CLASSES)
-        # embd, end_points, weights_fc3 = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=None, num_class=NUM_CLASSES)    # Bernardo
-        # embd, logits, loss, classify_loss = MODEL.get_loss_arcface(embd, labels_pl, end_points, weights_fc3, num_classes=NUM_CLASSES)
+            interm_layers, embd, logits, end_points, weights_fc3 = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=None, num_class=NUM_CLASSES)    # Bernardo
+            logits, loss, classify_loss = MODEL.get_loss_arcface(logits, labels_pl, end_points, weights_fc3, num_classes=NUM_CLASSES)
+            # embd, end_points, weights_fc3 = MODEL.get_model(pointclouds_pl, is_training_pl, bn_decay=None, num_class=NUM_CLASSES)    # Bernardo
+            # embd, logits, loss, classify_loss = MODEL.get_loss_arcface(embd, labels_pl, end_points, weights_fc3, num_classes=NUM_CLASSES)
 
-        losses = tf.get_collection('losses')
-        total_loss = tf.add_n(losses, name='total_loss')
+            losses = tf.get_collection('losses')
+            total_loss = tf.add_n(losses, name='total_loss')
 
-        # Add ops to save and restore all the variables.
-        saver = tf.train.Saver()
+            # Add ops to save and restore all the variables.
+            saver = tf.train.Saver()
 
-    # Create a session
-    config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
-    config.allow_soft_placement = True
-    config.log_device_placement = False
-    sess = tf.Session(config=config)
+        # Create a session
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        config.allow_soft_placement = True
+        config.log_device_placement = False
+        sess = tf.Session(config=config)
 
-    # Restore variables from disk.
-    saver.restore(sess, MODEL_PATH)
-    log_string("Model restored.")
+        # Restore variables from disk.
+        saver.restore(sess, MODEL_PATH)
+        log_string("Model restored.")
 
-    ops = {'pointclouds_pl': pointclouds_pl,
-           'labels_pl': labels_pl,
-           'is_training_pl': is_training_pl,
-           'embd': embd,
-           'logits': logits,
-           'loss': total_loss,
-           'end_points': end_points}
+        ops = {'pointclouds_pl': pointclouds_pl,
+            'labels_pl': labels_pl,
+            'is_training_pl': is_training_pl,
+            'embd': embd,
+            'logits': logits,
+            'loss': total_loss,
+            'end_points': end_points}
+
+        print('\nDistances file or Labels file don\'t exist')
+        print('PointNet++ (3D) - Computing all embeddings and distances...')
+        all_distances_pointnet2, pairs_labels = compute_all_embeddings_and_distances_pointnet2(sess, ops)
+        # print('all_distances_pointnet2.shape:', all_distances_pointnet2.shape)
+        # print('pairs_labels:', pairs_labels)
+        # print('pairs_labels.shape:', pairs_labels.shape)
+        # sys.exit(0)
 
 
-    print('\nPointNet++ (3D) - Computing all embeddings and distances...')
-    all_distances_pointnet2, pairs_labels = compute_all_embeddings_and_distances_pointnet2(sess, ops)
-    # print('all_distances_pointnet2.shape:', all_distances_pointnet2.shape)
-    # print('pairs_labels:', pairs_labels)
-    # print('pairs_labels.shape:', pairs_labels.shape)
-    # sys.exit(0)
+    if FLAGS.save_dist:
+        file_dist_name = 'dist_dataset=' + FLAGS.dataset + '_pointnet++_model=' + FLAGS.model_path.split('/')[-2] + '.npy'
+        file_labels_name = 'labels_dataset=' + FLAGS.dataset + '_pointnet++_model=' + FLAGS.model_path.split('/')[-2] + '.npy'
+        PATH_DISTS = os.path.join(os.path.dirname(FLAGS.model_path), file_dist_name)
+        PATH_LABELS = os.path.join(os.path.dirname(FLAGS.model_path), file_labels_name)
+        print(f'\nSaving distances at \'{PATH_DISTS}\' ...')
+        np.save(PATH_DISTS, all_distances_pointnet2)
+        print(f'Saving labels at \'{PATH_LABELS}\' ...\n')
+        np.save(PATH_LABELS, pairs_labels)
+
 
     if FLAGS.fusion and FLAGS.arc_dists != '':
         print(f'\nLoading Arcface (2D) pair distances: \'{FLAGS.arc_dists}\'')
@@ -528,12 +624,16 @@ def evaluate_varying_margin(num_votes):
         print('')
 
 
-    tpr, fpr, accuracy, tar_mean, tar_std, far_mean, \
+    tpr, fpr, accuracy, tar_mean, tar_std, far_mean, fnmr_mean, fnmr_std, fmr_mean, \
             tp_idx, fp_idx, tn_idx, fn_idx, ta_idx, fa_idx = do_k_fold_test(all_distances_pointnet2, pairs_labels, verbose=True)
     acc_mean, acc_std = np.mean(accuracy), np.std(accuracy)
 
     print('\nMODEL_PATH:', MODEL_PATH)
     print('Final - dataset: %s  -  acc_mean: %.6f +- %.6f  -  tar: %.6f +- %.6f    far: %.6f' % (FLAGS.dataset, acc_mean, acc_std, tar_mean, tar_std, far_mean))
+    
+    for fmr_target in list(fnmr_mean.keys()):
+        print(' '*39 + 'FNMR: %1.5f+-%1.5f   FMR: %1.5f' % (fnmr_mean[fmr_target], fnmr_std[fmr_target], fmr_target))
+
     print('Finished!')
 
 
@@ -541,5 +641,6 @@ def evaluate_varying_margin(num_votes):
 if __name__=='__main__':
     with tf.Graph().as_default():
         # evaluate(num_votes=FLAGS.num_votes)
-        evaluate_varying_margin(num_votes=FLAGS.num_votes)
+        # evaluate_varying_margin(num_votes=FLAGS.num_votes)
+        evaluate_varying_margin(FLAGS)
     LOG_FOUT.close()
