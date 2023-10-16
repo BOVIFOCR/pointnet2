@@ -273,7 +273,8 @@ if type(FLAGS.dataset) == str:
     elif FLAGS.dataset.upper() == 'mica_casia'.upper():
         min_samples, max_samples = -1, -1
         TRAIN_DATASET, TEST_DATASET = None, None
-        DATA_PATH = '/datasets2/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/1_CASIA-WebFace/imgs_crops_112x112/output'  # duo
+        # DATA_PATH = '/datasets2/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/1_CASIA-WebFace/imgs_crops_112x112/output'  # duo
+        DATA_PATH = '/groups/unico/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/1_CASIA-WebFace/imgs_crops_112x112/output' # daugman
         print(f'\nLoading train data: \'{FLAGS.dataset}\' ...')
         TRAIN_DATASET = casia_3Dreconstructed_MICA_dataset.CASIA_3D_Reconstructed_MICA_Dataset(TRAIN_DATASET, root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
         print(f'Loading test data: \'{FLAGS.dataset}\' ...')
@@ -282,7 +283,8 @@ if type(FLAGS.dataset) == str:
     elif FLAGS.dataset.upper() == 'mica_ffhq'.upper():
         min_samples, max_samples = -1, -1
         TRAIN_DATASET, TEST_DATASET = None, None
-        DATA_PATH = '/datasets2/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/2_FFHQ/images_crops_112x112/output'  # duo
+        # DATA_PATH = '/datasets2/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/2_FFHQ/images_crops_112x112/output'  # duo
+        DATA_PATH = '/groups/unico/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/2_FFHQ/images_crops_112x112/output' # daugman
         print(f'\nLoading train data: \'{FLAGS.dataset}\' ...')
         TRAIN_DATASET = ffhq_3Dreconstructed_MICA_dataset.FFHQ_3D_Reconstructed_MICA_Dataset(TRAIN_DATASET, root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
         print(f'Loading test data: \'{FLAGS.dataset}\' ...')
@@ -294,7 +296,8 @@ elif type(FLAGS.dataset) == list:
     for i, dataset in enumerate(FLAGS.dataset):
         if dataset.upper() == 'mica_casia'.upper():
             min_samples, max_samples = -1, -1
-            DATA_PATH = '/datasets2/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/1_CASIA-WebFace/imgs_crops_112x112/output'  # duo
+            # DATA_PATH = '/datasets2/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/1_CASIA-WebFace/imgs_crops_112x112/output'  # duo
+            DATA_PATH = '/groups/unico/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/1_CASIA-WebFace/imgs_crops_112x112/output' # daugman
             print(f'\nLoading train data: \'{dataset}\' ...')
             TRAIN_DATASET = casia_3Dreconstructed_MICA_dataset.CASIA_3D_Reconstructed_MICA_Dataset(TRAIN_DATASET, root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
             print(f'Loading test data: \'{dataset}\' ...')
@@ -302,7 +305,8 @@ elif type(FLAGS.dataset) == list:
 
         elif dataset.upper() == 'mica_ffhq'.upper():
             min_samples, max_samples = -1, -1
-            DATA_PATH = '/datasets2/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/2_FFHQ/images_crops_112x112/output'  # duo
+            # DATA_PATH = '/datasets2/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/2_FFHQ/images_crops_112x112/output'  # duo
+            DATA_PATH = '/groups/unico/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/2_FFHQ/images_crops_112x112/output' # daugman
             print(f'\nLoading train data: \'{dataset}\' ...')
             TRAIN_DATASET = ffhq_3Dreconstructed_MICA_dataset.FFHQ_3D_Reconstructed_MICA_Dataset(TRAIN_DATASET, root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
             print(f'Loading test data: \'{dataset}\' ...')
