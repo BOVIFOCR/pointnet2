@@ -144,10 +144,10 @@ elif FLAGS.dataset.upper() == 'reconst_hrn_cfp'.upper():
     EVAL_DATASET = magVerif_pairs_3Dreconstructed_HRN.MAGFACE_Evaluation_3D_Reconstructed_HRN_Dataset_Pairs(root=DATA_PATH, protocol_file_path=protocol_file_path, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
 elif FLAGS.dataset.upper() == 'reconst_mica_bupt'.upper():
-    # DATA_PATH = os.path.join(ROOT_DIR, '/datasets2/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/3_BUPT-BalancedFace/race_per_7000_crops_112x112/output')   # duo
-    # protocol_file_path = '/datasets2/frcsyn_wacv2024/comparison_files/comparison_files/sub-tasks_1.1_1.2/bupt_comparison.txt'        # duo
-    DATA_PATH = os.path.join(ROOT_DIR, '/groups/unico/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/3_BUPT-BalancedFace/race_per_7000_crops_112x112/output')   # daugman
-    protocol_file_path = '/groups/unico/frcsyn_wacv2024/comparison_files/comparison_files/sub-tasks_1.1_1.2/bupt_comparison.txt'                                      # daugman
+    DATA_PATH = os.path.join(ROOT_DIR, '/datasets2/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/3_BUPT-BalancedFace/race_per_7000_crops_112x112/output')        # duo
+    protocol_file_path = '/datasets2/frcsyn_wacv2024/comparison_files/comparison_files/sub-tasks_1.1_1.2/bupt_comparison.txt'                                           # duo
+    # DATA_PATH = os.path.join(ROOT_DIR, '/groups/unico/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/3_BUPT-BalancedFace/race_per_7000_crops_112x112/output')   # daugman
+    # protocol_file_path = '/groups/unico/frcsyn_wacv2024/comparison_files/comparison_files/sub-tasks_1.1_1.2/bupt_comparison.txt'                                      # daugman
     EVAL_DATASET = bupt_evaluation_3Dreconstructed_MICA_dataset_pairs.BUPT_Evaluation_3D_Reconstructed_MICA_Dataset_Pairs(root=DATA_PATH, protocol_file_path=protocol_file_path, npoints=NUM_POINT, normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
 
 
@@ -191,12 +191,17 @@ def cosine_distance_insightface(embds0, embds1):
     distances = np.sum(np.square(embds0 - embds1), axis=1)
     return distances
 
-def cosine_distance(embds0, embds1):
-    assert embds0.shape[0] == embds1.shape[0], f'Error, sizes of embds0 ({embds0.shape[0]}) and embds1 ({embds1.shape[0]}) are different. Must be equal!\n'
-    cos_dist = np.zeros(embds0.shape[0], dtype=np.float32)
-    for i in range(cos_dist.shape[0]):
-        cos_dist[i] = 1.0 - np.dot(embds0[i], embds1[i])/(np.linalg.norm(embds0[i])*np.linalg.norm(embds1[i]))
-    return cos_dist
+
+def cosine_sim(embeddings1, embeddings2):
+    sims = np.zeros(embeddings1.shape[0])
+    for i in range(0,embeddings1.shape[0]):
+        sims[i] = float(np.maximum(np.dot(embeddings1[i],embeddings2[i])/(np.linalg.norm(embeddings1[i])*np.linalg.norm(embeddings2[i])), 0.0))
+    return sims
+
+
+def cosine_distance(embeddings1, embeddings2):
+    distances = 1. - cosine_sim(embeddings1, embeddings2)
+    return distances
 
 
 # Bernardo
@@ -232,8 +237,8 @@ def compute_all_embeddings_and_distances_pointnet2(sess, ops):
         embd0, logits0 = sess.run([ops['embd'], ops['logits']], feed_dict=feed_dict0)
         embd1, logits1 = sess.run([ops['embd'], ops['logits']], feed_dict=feed_dict1)
         
-        # distances = cosine_distance(embd0, embd1)
-        distances = cosine_distance_insightface(embd0, embd1)
+        # distances = cosine_distance_insightface(embd0, embd1)
+        distances = cosine_distance(embd0, embd1)
         distances = distances[0:bsize]
 
         # all_distances = np.append(all_distances, distances, axis=0)
