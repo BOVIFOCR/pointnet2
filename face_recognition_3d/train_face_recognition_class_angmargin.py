@@ -84,7 +84,8 @@ parser.add_argument('--normal', type=bool, default=False, help='Whether to use n
 # parser.add_argument('--dataset', type=str, default='reconst_hrn_ms1mv3_reduced', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='reconst_hrn_ms1mv3_1000subj', help='Name of dataset to train model')   # Bernardo
 # parser.add_argument('--dataset', type=str, default='[\'mica_casia\',\'mica_ffhq\']', help='Name of dataset to train model')   # Bernardo
-parser.add_argument('--dataset', type=str, default='mica_casia_100class', help='Name of dataset to train model')   # Bernardo
+# parser.add_argument('--dataset', type=str, default='mica_casia_100class', help='Name of dataset to train model')   # Bernardo
+parser.add_argument('--dataset', type=str, default='mica_casia_5000class', help='Name of dataset to train model')   # Bernardo
 
 FLAGS = parser.parse_args()
 if FLAGS.dataset.startswith('[') and FLAGS.dataset.endswith(']'):
@@ -285,6 +286,15 @@ if type(FLAGS.dataset) == str:
         min_samples, max_samples = -1, -1
         TRAIN_DATASET, TEST_DATASET = None, None
         DATA_PATH = '/datasets2/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/1_CASIA-WebFace/output_100class'  # duo
+        print(f'\nLoading train data: \'{FLAGS.dataset}\' ...')
+        TRAIN_DATASET = casia_3Dreconstructed_MICA_dataset.CASIA_3D_Reconstructed_MICA_Dataset(TRAIN_DATASET, root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+        print(f'Loading test data: \'{FLAGS.dataset}\' ...')
+        TEST_DATASET  = casia_3Dreconstructed_MICA_dataset.CASIA_3D_Reconstructed_MICA_Dataset(TEST_DATASET, root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='test', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
+
+    elif FLAGS.dataset.upper() == 'mica_casia_5000class'.upper():
+        min_samples, max_samples = -1, -1
+        TRAIN_DATASET, TEST_DATASET = None, None
+        DATA_PATH = '/datasets2/frcsyn_wacv2024/datasets/3D_reconstruction_MICA/real/1_CASIA-WebFace/output_5000class'  # duo
         print(f'\nLoading train data: \'{FLAGS.dataset}\' ...')
         TRAIN_DATASET = casia_3Dreconstructed_MICA_dataset.CASIA_3D_Reconstructed_MICA_Dataset(TRAIN_DATASET, root=DATA_PATH, npoints=NUM_POINT, min_samples=min_samples, max_samples=max_samples, split='train', normal_channel=FLAGS.normal, batch_size=BATCH_SIZE)
         print(f'Loading test data: \'{FLAGS.dataset}\' ...')
